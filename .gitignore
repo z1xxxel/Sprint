@@ -1,0 +1,17 @@
+
+.DS_Store
+Thumbs.db
+
+.idea/
+.vscode/
+*.iml
+
+tms-frontend/node_modules/
+tms-frontend/dist/
+
+tms-backend/target/
+
+*.log
+
+tms-backend/uploads/*
+!tms-backend/uploads/.gitkeep

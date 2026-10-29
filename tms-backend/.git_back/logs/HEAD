@@ -1,0 +1,17 @@
+0000000000000000000000000000000000000000 64cdcf295bbe141228fd95aa1396fa3dfacb4969 zixel <maksimorozov01@mail.ru> 1792182453 +0300	commit (initial): rofl
+64cdcf295bbe141228fd95aa1396fa3dfacb4969 0000000000000000000000000000000000000000 zixel <maksimorozov01@mail.ru> 1792182493 +0300	Branch: renamed refs/heads/master to refs/heads/develop
+0000000000000000000000000000000000000000 64cdcf295bbe141228fd95aa1396fa3dfacb4969 zixel <maksimorozov01@mail.ru> 1792182493 +0300	Branch: renamed refs/heads/master to refs/heads/develop
+64cdcf295bbe141228fd95aa1396fa3dfacb4969 0000000000000000000000000000000000000000 zixel <maksimorozov01@mail.ru> 1792182504 +0300	Branch: renamed refs/heads/develop to refs/heads/main
+0000000000000000000000000000000000000000 64cdcf295bbe141228fd95aa1396fa3dfacb4969 zixel <maksimorozov01@mail.ru> 1792182504 +0300	Branch: renamed refs/heads/develop to refs/heads/main
+64cdcf295bbe141228fd95aa1396fa3dfacb4969 64cdcf295bbe141228fd95aa1396fa3dfacb4969 zixel <maksimorozov01@mail.ru> 1792182562 +0300	checkout: moving from main to develop
+64cdcf295bbe141228fd95aa1396fa3dfacb4969 a9ec507e69931498b18e94b4b1fb0a2fa161ef9b zixel <maksimorozov01@mail.ru> 1792189841 +0300	commit: obnova
+a9ec507e69931498b18e94b4b1fb0a2fa161ef9b b41cf86d5e4ed129b188e3d20d421936bdb2a342 zixel <maksimorozov01@mail.ru> 1792255431 +0300	commit: event_v_1
+b41cf86d5e4ed129b188e3d20d421936bdb2a342 805db5f131ea0f43d1a804b34af3f7238ee1a680 zixel <maksimorozov01@mail.ru> 1792336377 +0300	commit: role
+805db5f131ea0f43d1a804b34af3f7238ee1a680 04007d01047eb8d8f8730dbf472f12584754cac8 zixel <maksimorozov01@mail.ru> 1792817620 +0300	commit: coin_roles
+04007d01047eb8d8f8730dbf472f12584754cac8 60762cca0763bf1ab944981e230e2542f59bb36f zixel <maksimorozov01@mail.ru> 1792824188 +0300	commit: shop_v_1
+60762cca0763bf1ab944981e230e2542f59bb36f 9a8b0093e20781a188f394cce609d20eece0f6af zixel <maksimorozov01@mail.ru> 1792938287 +0300	commit: big_obnova
+9a8b0093e20781a188f394cce609d20eece0f6af 696d16d42c449457174a68fa141f507b1fb25e29 zixel <maksimorozov01@mail.ru> 1792949305 +0300	commit: sup
+696d16d42c449457174a68fa141f507b1fb25e29 53d5c05b86486e8ec48950d852b5a94caa0d9aea zixel <maksimorozov01@mail.ru> 1792957536 +0300	commit: qweewq
+53d5c05b86486e8ec48950d852b5a94caa0d9aea 524818629898c7088d5afb5d5da34e0ae90f4766 zixel <maksimorozov01@mail.ru> 1793005488 +0300	commit: admin_chat_file_magaz
+524818629898c7088d5afb5d5da34e0ae90f4766 8506599acbff52e698fdfce6a300e6855124b245 zixel <maksimorozov01@mail.ru> 1793041746 +0300	commit: qwe
+8506599acbff52e698fdfce6a300e6855124b245 1285cb1697e9f7d91ff8f3e96be17da108c8745c zixel <maksimorozov01@mail.ru> 1793289280 +0300	commit: qwe

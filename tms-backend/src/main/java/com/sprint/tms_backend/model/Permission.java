@@ -1,0 +1,29 @@
+package com.sprint.tms_backend.model;
+
+public enum Permission {
+
+    EVENT_CREATE,
+    EVENT_EDIT_OWN,
+    EVENT_EDIT_ANY,
+    EVENT_APPROVE,
+    EVENT_VIEW_ANY,
+
+    COIN_TRANSFER,
+    COIN_GRANT_SUBORDINATE,
+    COIN_GRANT_ANY,
+
+    CATALOG_VIEW,
+    CATALOG_MANAGE,
+
+    USER_MANAGE,
+    ROLE_ASSIGN,
+
+    ORDER_MANAGE,
+    TICKET_MANAGE,
+    TICKET_CREATE,
+    
+    QUEST_MANAGE,
+    QUEST_PARTICIPATE,
+
+    NEWS_MANAGE
+}
