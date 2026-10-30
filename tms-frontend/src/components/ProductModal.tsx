@@ -4,7 +4,7 @@ import { uploadFile } from '../api/files'
 import DiscountModal from './DiscountModal'
 import ImageCropperModal from './ImageCropperModal'
 import { notify } from '../lib/notify'
-import { IconX, IconSettings } from './Icons'
+import { IconSettings } from './Icons' // <-- IconX удален
 import type { Category, Product } from '../types'
 
 interface VariantInput {
@@ -246,7 +246,7 @@ export default function ProductModal({
         name,
         description,
         price,
-        stock: hasVariants ? undefined : stock, // Отправляем stock только если нет вариантов
+        stock: hasVariants ? undefined : stock,
         imageUrl,
         images: images.filter(img => img.trim() !== ''),
         categoryId,

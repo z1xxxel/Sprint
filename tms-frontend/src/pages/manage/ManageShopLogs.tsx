@@ -12,7 +12,6 @@ import {
   IconArrowDown,
   IconStar,
   IconSettings,
-  IconLock,
 } from '../../components/Icons'
 import Avatar from '../../components/Avatar'
 
@@ -96,7 +95,6 @@ const ACTION_MAP: Record<
 export default function ManageShopLogs() {
   const user = useAuth((s) => s.user)!
   
-  // Состояния для накопления логов (пагинация)
   const [logs, setLogs] = useState<any[]>([])
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -104,14 +102,13 @@ export default function ManageShopLogs() {
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Функция загрузки (0 — первая страница, >0 — следующие)
   async function loadData(pageNum: number) {
     try {
       if (pageNum === 0) setLoading(true)
       else setLoadingMore(true)
       
       setError(null)
-      const res = await getAuditLogs(user.id, pageNum, 30) // Берем по 30 штук за раз
+      const res = await getAuditLogs(user.id, pageNum, 30)
 
       if (pageNum === 0) {
         setLogs(res.content)
@@ -119,7 +116,7 @@ export default function ManageShopLogs() {
         setLogs((prev) => [...prev, ...res.content])
       }
       
-      setHasMore(pageNum + 1 < res.totalPages)
+      setHasMore(!res.last)
     } catch (e: any) {
       setError(e.response?.data || 'Ошибка загрузки логов')
     } finally {
@@ -128,7 +125,6 @@ export default function ManageShopLogs() {
     }
   }
 
-  // Первичная загрузка
   useEffect(() => {
     loadData(0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,7 +136,6 @@ export default function ManageShopLogs() {
     loadData(nextPage)
   }
 
-  // Красивое форматирование даты
   function formatDate(iso: string) {
     const d = new Date(iso)
     return d.toLocaleString('ru-RU', {
@@ -179,7 +174,6 @@ export default function ManageShopLogs() {
       <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] overflow-hidden">
         <div className="divide-y divide-slate-100 dark:divide-[#30363d]">
           {logs.map((log, index) => {
-            // Достаем стили и иконку по коду действия (или даем дефолт)
             const meta = ACTION_MAP[log.action] || {
               label: log.action,
               icon: <IconSettings size={16} />,
@@ -191,7 +185,6 @@ export default function ManageShopLogs() {
                 key={`${log.id}-${index}`}
                 className="p-4 sm:p-5 flex gap-4 hover:bg-slate-50 dark:hover:bg-[#0d1117]/50 transition"
               >
-                {/* Иконка действия */}
                 <div className="shrink-0 mt-0.5">
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center border ${meta.color}`}
@@ -200,7 +193,6 @@ export default function ManageShopLogs() {
                   </div>
                 </div>
 
-                {/* Контент */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 flex-wrap">
                     <div className="font-medium text-sm text-slate-900 dark:text-white">
@@ -238,7 +230,6 @@ export default function ManageShopLogs() {
         </div>
       </div>
 
-      {/* Кнопка "Показать еще" */}
       {hasMore && (
         <div className="flex justify-center pt-2">
           <button

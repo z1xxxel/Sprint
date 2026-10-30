@@ -11,7 +11,6 @@ import {
   IconCalendar,
   IconTarget,
   IconChart,
-  IconStar,
   IconChat,
   IconSupport,
   IconTrophy,
@@ -22,10 +21,10 @@ import {
   IconSun,
   IconMoon,
   IconCart,
-  IconHeart, // <-- ДОБАВЛЕНО
-  IconGift,  // <-- ДОБАВЛЕНО
-  IconLock,  // <-- ДОБАВЛЕНО
-  IconBell,  // <-- ДОБАВЛЕНО
+  IconHeart,
+  IconGift,
+  IconLock,
+  IconBell,
 } from './Icons'
 import Avatar from './Avatar'
 import Toaster from './Toaster'
@@ -57,12 +56,12 @@ const NAV_GROUPS: NavItem[][] = [
   [
     { to: '/catalog', label: 'Магазин', icon: <IconBag /> },
     { to: '/orders', label: 'Мои заказы', icon: <IconCheck /> },
-    { to: '/favorites', label: 'Избранное', icon: <IconHeart /> }, // <-- ИЗМЕНЕНО
+    { to: '/favorites', label: 'Избранное', icon: <IconHeart /> },
   ],
   // Социальное
   [
     { to: '/users', label: 'Сотрудники', icon: <IconSearch /> },
-    { to: '/thanks', label: 'Благодарности', icon: <IconGift /> }, // <-- ИЗМЕНЕНО
+    { to: '/thanks', label: 'Благодарности', icon: <IconGift /> },
     { to: '/chats', label: 'Чаты', icon: <IconChat /> },
     { to: '/support', label: 'Поддержка', icon: <IconSupport /> },
   ],
@@ -82,7 +81,7 @@ const MANAGE_GROUP: NavItem[] = [
   {
     to: '/admin',
     label: 'Админка',
-    icon: <IconLock />, // <-- ИЗМЕНЕНО (вместо IconTrophy)
+    icon: <IconLock />,
     roles: ['ADMIN'],
   },
 ]
@@ -167,10 +166,8 @@ export default function Layout() {
 
             {/* Правая часть */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
-              {/* Колокольчик */}
               <NotificationBell />
 
-              {/* Тема */}
               <button
                 onClick={toggle}
                 title={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
@@ -179,7 +176,6 @@ export default function Layout() {
                 {theme === 'light' ? <IconMoon size={18} /> : <IconSun size={18} />}
               </button>
 
-              {/* Корзина */}
               <Link
                 to="/cart"
                 title="Корзина"
@@ -193,7 +189,6 @@ export default function Layout() {
                 )}
               </Link>
 
-              {/* Имя */}
               <div className="text-right hidden md:block ml-1">
                 <div className="text-sm font-medium text-slate-900 dark:text-white leading-tight max-w-[140px] truncate">
                   {user.name}
@@ -201,12 +196,10 @@ export default function Layout() {
                 <div className="text-xs text-slate-500 dark:text-slate-400">{user.role}</div>
               </div>
 
-              {/* Аватар */}
               <Link to="/profile" title="Профиль" className="ml-1">
                 <Avatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
               </Link>
 
-              {/* Выход */}
               <button
                 onClick={handleLogout}
                 title="Выйти"

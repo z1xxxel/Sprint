@@ -149,11 +149,12 @@ public class ShopController {
     // ==========================================
 
     @PostMapping("/products/{productId}/discount")
-    public ResponseEntity<Discount> createDiscount(
+    public ResponseEntity<String> createDiscount(
             @PathVariable Long productId,
             @RequestParam Long actorId,
             @RequestBody CreateDiscountRequest request) {
-        return new ResponseEntity<>(shopService.createDiscount(productId, actorId, request), HttpStatus.CREATED);
+        shopService.createDiscount(productId, actorId, request);
+        return ResponseEntity.ok("Скидка успешно применена");
     }
 
     @DeleteMapping("/products/{id}/discount")
