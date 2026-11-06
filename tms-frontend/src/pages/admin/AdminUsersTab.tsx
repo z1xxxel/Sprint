@@ -7,10 +7,16 @@ import {
   toggleUserBlock,
   changeUserPassword,
 } from '../../api/users'
+import {
+  getDepartments,
+  assignUserToDepartment,
+  removeUserFromDepartment,
+} from '../../api/departments'
+import { can } from '../../lib/permissions'
 import { notify } from '../../lib/notify'
 import { confirmDialog } from '../../lib/confirm'
 import CreateUserModal from '../../components/CreateUserModal'
-import type { UserListItem, Role } from '../../types'
+import type { UserListItem, Role, Department } from '../../types'
 import { IconSearch, IconCheck, IconX, IconPlus } from '../../components/Icons'
 
 const ROLE_LABEL: Record<string, string> = {
@@ -33,14 +39,17 @@ const ROLE_COLOR: Record<string, string> = {
 
 export default function AdminUsersTab() {
   const me = useAuth((s) => s.user)!
-  const isAdmin = me.role === 'ADMIN' // <-- Проверка на админа
+  const isAdmin = me.role === 'ADMIN'
   
   const { data, loading, error } = useFetch(() => getAllUsers(), [])
+  const departments = useFetch(() => getDepartments(), [])
+
   const [query, setQuery] = useState('')
   const [local, setLocal] = useState<UserListItem[] | null>(null)
   const [busy, setBusy] = useState<number | null>(null)
   const [pwdUser, setPwdUser] = useState<UserListItem | null>(null)
   const [roleUser, setRoleUser] = useState<UserListItem | null>(null)
+  const [deptUser, setDeptUser] = useState<UserListItem | null>(null)
   const [creating, setCreating] = useState(false)
 
   const list = (local ?? data ?? []).filter((u) => {
@@ -115,7 +124,7 @@ export default function AdminUsersTab() {
                   Сотрудник
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
-                  Роль
+                  Роль / Отдел
                 </th>
                 <th className="text-right px-4 py-3 font-medium text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
                   Баланс
@@ -148,13 +157,14 @@ export default function AdminUsersTab() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded font-medium ${
-                        ROLE_COLOR[u.role] || ROLE_COLOR.EMPLOYEE
-                      }`}
-                    >
-                      {ROLE_LABEL[u.role] || u.role}
-                    </span>
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className={`text-xs px-2 py-0.5 rounded font-medium ${ROLE_COLOR[u.role] || ROLE_COLOR.EMPLOYEE}`}>
+                        {ROLE_LABEL[u.role] || u.role}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {u.departmentName || 'Без отдела'}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-white">
                     {u.balance.toFixed(0)}
@@ -173,6 +183,16 @@ export default function AdminUsersTab() {
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1.5 flex-wrap">
                       
+                      {/* Кнопка Отдел (Админ и HR) */}
+                      {can.manageUsers(me.role) && (
+                        <button
+                          onClick={() => setDeptUser(u)}
+                          className="text-xs px-2.5 py-1 border border-slate-300 dark:border-[#30363d] rounded text-slate-700 dark:text-slate-300 hover:border-brand-500 transition"
+                        >
+                          Отдел
+                        </button>
+                      )}
+
                       {/* Кнопка Роль (только Админ) */}
                       {isAdmin && (
                         <button
@@ -239,6 +259,20 @@ export default function AdminUsersTab() {
         />
       )}
 
+      {/* Модалка смены отдела */}
+      {deptUser && (
+        <ChangeDepartmentModal
+          user={deptUser}
+          departments={departments.data ?? []}
+          onClose={() => setDeptUser(null)}
+          onSaved={(deptName) => {
+            notify.success(`${deptUser.name} переведен: ${deptName}`)
+            setDeptUser(null)
+            window.location.reload()
+          }}
+        />
+      )}
+
       {/* Модалка смены роли */}
       {roleUser && (
         <RoleModal
@@ -269,6 +303,68 @@ export default function AdminUsersTab() {
           }}
         />
       )}
+    </div>
+  )
+}
+
+// ==========================================
+// === Модалка смены отдела ===
+// ==========================================
+function ChangeDepartmentModal({
+  user,
+  departments,
+  onClose,
+  onSaved,
+}: {
+  user: UserListItem
+  departments: Department[]
+  onClose: () => void
+  onSaved: (deptName: string) => void
+}) {
+  const [deptId, setDeptId] = useState<number | ''>(user.departmentId ?? '')
+  const [busy, setBusy] = useState(false)
+
+  async function handleSave() {
+    setBusy(true)
+    try {
+      if (deptId === '') {
+        await removeUserFromDepartment(user.id)
+        onSaved('Без отдела')
+      } else {
+        await assignUserToDepartment(Number(deptId), user.id)
+        const dept = departments.find((d) => d.id === Number(deptId))
+        onSaved(dept ? dept.name : 'Новый отдел')
+      }
+    } catch (e) {
+      alert('Ошибка при смене отдела')
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#161b22] rounded-xl w-full max-w-md p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Сменить подразделение</h2>
+        <p className="text-sm text-slate-500">{user.name}</p>
+        
+        <select
+          value={deptId}
+          onChange={(e) => setDeptId(e.target.value ? Number(e.target.value) : '')}
+          className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 text-sm"
+        >
+          <option value="">— Без отдела —</option>
+          {departments.map((d) => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onClose} disabled={busy} className="px-4 py-2 text-sm text-slate-600">Отмена</button>
+          <button onClick={handleSave} disabled={busy} className="bg-brand-600 hover:bg-brand-700 text-white rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50">
+            {busy ? '...' : 'Сохранить'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
