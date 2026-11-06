@@ -29,6 +29,9 @@ public class UserService {
     private final UserAchievementRepository userAchievementRepository;
     private final SeasonService seasonService;
 
+    // ==========================================
+    // === АВТОРИЗАЦИЯ ===
+    // ==========================================
     @Transactional(readOnly = true)
     public User login(String email, String password) {
         User user = userRepository.findByEmail(email)
@@ -45,6 +48,9 @@ public class UserService {
         return user;
     }
 
+    // ==========================================
+    // === СОЗДАНИЕ И УПРАВЛЕНИЕ ===
+    // ==========================================
     @Transactional
     public User createUser(Long actorId, User newUser) {
         // Если actorId нет — это БУТСТРАП (создание самого первого пользователя)
@@ -52,10 +58,12 @@ public class UserService {
             if (userRepository.count() > 0) {
                 throw new RuntimeException("Передан actorId=null, но база не пуста. Укажите создателя.");
             }
+            // Разрешаем создать только ADMIN
             if (newUser.getRole() != UserRole.ADMIN) {
                 throw new RuntimeException("Первый пользователь в системе должен быть ADMIN");
             }
         } else {
+            // Обычная проверка прав
             User actor = userRepository.findById(actorId)
                     .orElseThrow(() -> new RuntimeException("Создатель не найден"));
 
@@ -73,11 +81,17 @@ public class UserService {
             throw new RuntimeException("Пароль обязателен при создании");
         }
 
+        // Значения по умолчанию, если они не переданы
         if (newUser.getBalance() == null) newUser.setBalance(BigDecimal.ZERO);
         if (newUser.getRating() == null) newUser.setRating(0.0);
         if (newUser.getLifetimeRating() == null) newUser.setLifetimeRating(0.0);
         if (newUser.getIsBlocked() == null) newUser.setIsBlocked(false);
         if (newUser.getMonthlyEarnedCoins() == null) newUser.setMonthlyEarnedCoins(BigDecimal.ZERO);
+
+        // Инициализация полей Streak, чтобы не было ошибки NOT NULL
+        if (newUser.getCurrentStreak() == null) newUser.setCurrentStreak(0);
+        if (newUser.getLongestStreak() == null) newUser.setLongestStreak(0);
+        if (newUser.getLastStreakRewardAt() == null) newUser.setLastStreakRewardAt(0);
 
         return userRepository.save(newUser);
     }
@@ -151,23 +165,29 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // ==========================================
+    // === ПРОФИЛЬ (С двумя рейтингами) ===
+    // ==========================================
     @Transactional(readOnly = true)
     public UserProfileResponseDTO getUserProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
+        // 1. Уровень считаем от LIFETIME (общей репутации за всё время)
         double lifetimeRating = user.getLifetimeRating() != null ? user.getLifetimeRating() : 0.0;
         String level;
         if (lifetimeRating < 100) level = "Junior";
         else if (lifetimeRating < 500) level = "Middle";
-        else if (lifetimeRating < 1200) level = "Senior";
+        else if (lifetimeRating < 1500) level = "Senior";
         else level = "Legend";
 
+        // 2. Место считаем от ТЕКУЩЕГО рейтинга сезона
         double currentRating = user.getRating() != null ? user.getRating() : 0.0;
         long higherRatedCount = userRepository.countByRatingGreaterThan(currentRating);
         int currentPlace = (int) higherRatedCount + 1;
         long totalUsers = userRepository.count();
 
+        // 3. Подразделение
         Long departmentId = null;
         String departmentName = "Без подразделения";
         Integer departmentPlace = null;
@@ -179,9 +199,11 @@ public class UserService {
             try {
                 departmentPlace = seasonService.getDepartmentPlace(departmentId);
             } catch (Exception e) {
+                // Сезон еще не начался
             }
         }
 
+        // 4. История баланса (3 шт)
         List<CoinTransactionDTO> recentBalance = coinTxRepository
                 .findHistoryByUser(userId, PageRequest.of(0, 3))
                 .map(t -> new CoinTransactionDTO(
@@ -191,12 +213,14 @@ public class UserService {
                         t.getCreatedAt()
                 )).getContent();
 
+        // 5. История рейтинга (3 шт)
         List<RatingTransactionDTO> recentRating = ratingTxRepository
                 .findAllByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, 3))
                 .map(rt -> new RatingTransactionDTO(
                         rt.getId(), rt.getAmount(), rt.getReason(), rt.getCreatedAt()
                 )).getContent();
 
+        // 6. Последние 5 заказов
         List<UserProfileResponseDTO.OrderShortDTO> recentOrders = orderRepository
                 .findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, 5))
                 .map(o -> new UserProfileResponseDTO.OrderShortDTO(
@@ -204,9 +228,11 @@ public class UserService {
                         o.getTotalPrice(), o.getStatus(), o.getAdminComment()
                 )).getContent();
 
+        // 7. Статистика событий
         long organizedEvents = eventRepository.countByOrganizerId(userId);
         long participatedEvents = participantRepository.countByUserId(userId);
 
+        // 8. Сгруппированные ачивки
         List<AchievementProfileDTO> achievementsProfile = buildGroupedAchievements(userId);
 
         return new UserProfileResponseDTO(
@@ -216,9 +242,9 @@ public class UserService {
                 user.getRole(),
                 user.getAvatarUrl(),
                 user.getBalance(),
-                currentRating,
-                lifetimeRating,
-                level,
+                currentRating,      // Текущий рейтинг сезона
+                lifetimeRating,     // Общая репутация
+                level,              // От lifetimeRating
                 currentPlace,
                 totalUsers,
                 departmentId,
@@ -233,6 +259,9 @@ public class UserService {
         );
     }
 
+    // ==========================================
+    // === ВСПОМОГАТЕЛЬНЫЙ МЕТОД (ачивки) ===
+    // ==========================================
     private List<AchievementProfileDTO> buildGroupedAchievements(Long userId) {
         List<Achievement> allAchievements = achievementRepository.findAll();
 
@@ -270,6 +299,7 @@ public class UserService {
             }
 
             Achievement first = levels.get(0);
+            // "Участник I" -> "Участник"
             String groupName = first.getName().split(" I")[0];
 
             result.add(new AchievementProfileDTO(
@@ -297,6 +327,7 @@ public class UserService {
         User actor = userRepository.findById(actorId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
+        // Менять можно только себе, если ты не ADMIN
         if (!actor.getId().equals(userId) && actor.getRole() != UserRole.ADMIN) {
             throw new SecurityException("Можно менять только свой аватар");
         }
