@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6ueepAZvcGaaTXHyqN7kmiDwjCbz0n3C5a2lxEFUoQ3qyuKbkAoTcso0Sqc5jjh
+\restrict JI0foHB66KhdsW7DdPHzs3ldAqKCWxLi4rdmZhKpXeksFSP3dgAjoA4F4ZccMhC
 
 -- Dumped from database version 18.6
 -- Dumped by pg_dump version 18.6
 
--- Started on 2026-11-12 17:14:28
+-- Started on 2026-11-12 17:25:01
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1720,11 +1720,11 @@ SELECT pg_catalog.setval('public.user_quests_id_seq', 25, true);
 SELECT pg_catalog.setval('public.users_id_seq', 24, true);
 
 
--- Completed on 2026-11-12 17:14:28
+-- Completed on 2026-11-12 17:25:02
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6ueepAZvcGaaTXHyqN7kmiDwjCbz0n3C5a2lxEFUoQ3qyuKbkAoTcso0Sqc5jjh
+\unrestrict JI0foHB66KhdsW7DdPHzs3ldAqKCWxLi4rdmZhKpXeksFSP3dgAjoA4F4ZccMhC
 
