@@ -125,7 +125,6 @@ export const IconTrophyFilled = ({ size = 20, className }: IconProps) => (
   </svg>
 )
 
-// Медаль с номером места (1/2/3). Рисуется вручную, цвета gold/silver/bronze
 export const IconMedal = ({
   size = 20,
   className,
@@ -264,8 +263,6 @@ export const IconPin = ({ size = 20, className }: IconProps) => (
   </svg>
 )
 
-// ============ НОВЫЕ ИКОНКИ ============
-
 export const IconEdit = ({ size = 20, className }: IconProps) => (
   <svg {...base(size, className)}>
     <path d="M12 20h9" />
@@ -349,5 +346,33 @@ export const IconClock = ({ size = 20, className }: IconProps) => (
   <svg {...base(size, className)}>
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3 2" />
+  </svg>
+)
+
+// ============ ЛОГОТИП ПУЛЬС ============
+
+export const IconPulseLogo = ({ size = 24, className = '' }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <defs>
+      <linearGradient id="pulse-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#34d399" /> {/* brand-400 */}
+        <stop offset="50%" stopColor="#10b981" /> {/* brand-500 */}
+        <stop offset="100%" stopColor="#047857" /> {/* brand-700 */}
+      </linearGradient>
+    </defs>
+    <path
+      d="M2 12h4l2-4 4 9 3-13 3 11 2-3h2"
+      stroke="url(#pulse-grad)"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 )

@@ -25,6 +25,7 @@ import {
   IconGift,
   IconLock,
   IconBell,
+  IconPulseLogo,
 } from './Icons'
 import Avatar from './Avatar'
 import Toaster from './Toaster'
@@ -40,32 +41,27 @@ interface NavItem {
 }
 
 const NAV_GROUPS: NavItem[][] = [
-  // Основное
   [
     { to: '/', label: 'Главная', icon: <IconHome /> },
     { to: '/news', label: 'Новости', icon: <IconBell /> },
     { to: '/profile', label: 'Профиль', icon: <IconUser /> },
   ],
-  // Активности
   [
     { to: '/events', label: 'События', icon: <IconCalendar /> },
     { to: '/quests', label: 'Квесты', icon: <IconTarget /> },
     { to: '/surveys', label: 'Опросы', icon: <IconChart /> },
   ],
-  // Магазин
   [
     { to: '/catalog', label: 'Магазин', icon: <IconBag /> },
     { to: '/orders', label: 'Мои заказы', icon: <IconCheck /> },
     { to: '/favorites', label: 'Избранное', icon: <IconHeart /> },
   ],
-  // Социальное
   [
     { to: '/users', label: 'Сотрудники', icon: <IconSearch /> },
     { to: '/thanks', label: 'Благодарности', icon: <IconGift /> },
     { to: '/chats', label: 'Чаты', icon: <IconChat /> },
     { to: '/support', label: 'Поддержка', icon: <IconSupport /> },
   ],
-  // Геймификация
   [
     { to: '/seasons', label: 'Сезоны', icon: <IconTrophy /> },
   ],
@@ -127,11 +123,9 @@ export default function Layout() {
             </button>
 
             {/* Лого */}
-            <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                <span className="text-white font-bold text-sm">П</span>
-              </div>
-              <span className="font-semibold text-slate-900 dark:text-white tracking-tight hidden sm:inline">
+            <Link to="/" className="flex items-center gap-2 shrink-0 group">
+              <IconPulseLogo size={32} className="group-hover:scale-105 transition-transform" />
+              <span className="font-bold text-xl text-slate-900 dark:text-white tracking-tight hidden sm:inline">
                 ПУЛЬС
               </span>
             </Link>
@@ -222,10 +216,8 @@ export default function Layout() {
           <aside className="fixed top-0 left-0 bottom-0 w-72 max-w-[85vw] bg-white dark:bg-[#161b22] z-50 lg:hidden flex flex-col shadow-xl">
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-[#30363d]">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-md bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">П</span>
-                </div>
-                <span className="font-semibold text-slate-900 dark:text-white">ПУЛЬС</span>
+                <IconPulseLogo size={28} />
+                <span className="font-bold text-lg text-slate-900 dark:text-white">ПУЛЬС</span>
               </div>
               <button
                 onClick={() => setMobileOpen(false)}

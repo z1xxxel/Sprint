@@ -4,7 +4,7 @@ import { login } from '../api/auth'
 import { getProfile } from '../api/users'
 import { useAuth } from '../store/auth'
 import { useTheme } from '../hooks/useTheme'
-import { IconSun, IconMoon } from '../components/Icons'
+import { IconSun, IconMoon, IconPulseLogo } from '../components/Icons'
 
 export default function Login() {
   const [email, setEmail] = useState('admin@tms.local')
@@ -26,6 +26,7 @@ export default function Login() {
         const profile = await getProfile(data.userId)
         avatarUrl = profile.avatarUrl ?? null
       } catch {
+        // Если профиль не загрузился — не критично
       }
       doLogin({
         id: data.userId,
@@ -56,11 +57,10 @@ export default function Login() {
       </button>
 
       <div className="w-full max-w-sm relative">
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-md">
-            <span className="text-white font-bold text-lg">П</span>
-          </div>
-          <span className="text-2xl font-semibold text-slate-900 dark:text-white tracking-tight">
+        {/* ОБНОВЛЕННЫЙ ЛОГОТИП НА ВХОДЕ */}
+        <div className="flex flex-col items-center justify-center gap-2 mb-8">
+          <IconPulseLogo size={64} />
+          <span className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
             ПУЛЬС
           </span>
         </div>
