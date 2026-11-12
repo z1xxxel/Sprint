@@ -8,3 +8,7 @@
 логин - emp_back@tms.local пароль - 123. Сотрудник\
 логин - emp_front@tms.local пароль - 123. Сотрудник\
 логин - emp_qa@tms.local пароль - 123. Сотрудник
+
+docker compose up --build -d
+
+docker system prune -a --volumes -f
