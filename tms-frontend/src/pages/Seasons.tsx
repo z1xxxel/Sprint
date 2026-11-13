@@ -78,7 +78,7 @@ export default function Seasons() {
   return (
     <div className="space-y-6">
       {/* HERO */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-accent-600 to-accent-700 text-white">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
         <div className="relative p-6 sm:p-8">

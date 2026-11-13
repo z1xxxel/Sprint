@@ -44,9 +44,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f7f9f8] via-white to-brand-50/50 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-[#0f291f] px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f5f7ff] via-white to-brand-100/50 dark:from-[#0d1117] dark:via-[#0d1117] dark:to-[#1e1b4b] px-4 relative overflow-hidden">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-200 dark:bg-brand-700/20 rounded-full blur-3xl opacity-30 pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-200 dark:bg-emerald-700/20 rounded-full blur-3xl opacity-20 pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-200 dark:bg-accent-700/20 rounded-full blur-3xl opacity-20 pointer-events-none" />
 
       <button
         onClick={toggle}
@@ -107,7 +107,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-700 text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-50 transition shadow-sm hover:shadow-md"
+            className="w-full bg-gradient-to-r from-brand-600 to-accent-600 hover:from-brand-700 hover:to-accent-700 text-white rounded-lg py-2.5 text-sm font-medium disabled:opacity-50 transition shadow-sm hover:shadow-md"
           >
             {loading ? 'Вход...' : 'Войти'}
           </button>

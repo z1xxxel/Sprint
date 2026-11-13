@@ -153,7 +153,7 @@ export default function Quests() {
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-emerald-600 to-teal-700 text-white p-6 sm:p-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-600 to-accent-600 text-white p-6 sm:p-8">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         <div className="relative">
           <div className="flex items-start justify-between gap-3 flex-wrap">

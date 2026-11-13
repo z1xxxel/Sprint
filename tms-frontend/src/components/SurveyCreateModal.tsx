@@ -6,6 +6,7 @@ interface Props {
   actorId: number
   onClose: () => void
   onCreated: () => void
+  defaultDeadline?: Date
 }
 
 interface OptionInput {
@@ -28,11 +29,19 @@ function emptyQuestion(): QuestionInput {
   }
 }
 
-export default function SurveyCreateModal({ actorId, onClose, onCreated }: Props) {
+export default function SurveyCreateModal({
+  actorId,
+  onClose,
+  onCreated,
+  defaultDeadline,
+}: Props) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [deadline, setDeadline] = useState(() => {
-    // Через неделю
+    if (defaultDeadline) {
+      const pad = (n: number) => String(n).padStart(2, '0')
+      return `${defaultDeadline.getFullYear()}-${pad(defaultDeadline.getMonth() + 1)}-${pad(defaultDeadline.getDate())}T${pad(defaultDeadline.getHours())}:${pad(defaultDeadline.getMinutes())}`
+    }
     const d = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     return d.toISOString().slice(0, 16)
   })
@@ -120,7 +129,6 @@ export default function SurveyCreateModal({ actorId, onClose, onCreated }: Props
         })),
       }))
 
-      // Формат даты для бэка: YYYY-MM-DDTHH:mm:ss
       const dl = deadline.length === 16 ? deadline + ':00' : deadline
 
       await createSurvey({
@@ -234,7 +242,6 @@ export default function SurveyCreateModal({ actorId, onClose, onCreated }: Props
           </div>
         </div>
 
-        {/* Вопросы */}
         <div className="space-y-3">
           <div className="text-sm font-semibold text-slate-900 dark:text-white">
             Вопросы ({questions.length})

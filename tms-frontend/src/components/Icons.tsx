@@ -362,9 +362,9 @@ export const IconPulseLogo = ({ size = 24, className = '' }: IconProps) => (
   >
     <defs>
       <linearGradient id="pulse-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#34d399" /> {/* brand-400 */}
-        <stop offset="50%" stopColor="#10b981" /> {/* brand-500 */}
-        <stop offset="100%" stopColor="#047857" /> {/* brand-700 */}
+        <stop offset="0%" stopColor="#6366f1" />
+        <stop offset="50%" stopColor="#8b5cf6" />
+        <stop offset="100%" stopColor="#6d28d9" />
       </linearGradient>
     </defs>
     <path
@@ -376,3 +376,26 @@ export const IconPulseLogo = ({ size = 24, className = '' }: IconProps) => (
     />
   </svg>
 )
+
+export const IconEconomy = ({ size = 20, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <ellipse cx="12" cy="5" rx="7" ry="2.5" />
+    <path d="M5 5v3c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5V5" />
+    <path d="M5 8v3c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5V8" />
+    <path d="M5 11v3c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5v-3" />
+    <path d="M5 14v3c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5v-3" />
+  </svg>
+)
+
+export const IconChevronDown = ({ size = 20, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+)
+
+export const IconChevronRight = ({ size = 20, className }: IconProps) => (
+  <svg {...base(size, className)}>
+    <path d="M9 6l6 6-6 6" />
+  </svg>
+)
+

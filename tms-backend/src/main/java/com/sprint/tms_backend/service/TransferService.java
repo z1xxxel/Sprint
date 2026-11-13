@@ -25,6 +25,7 @@ public class TransferService {
     private final SettingsService settingsService;
     private final TreasuryService treasuryService;
     private final EconomyLimitService economyLimitService;
+    private final NotificationService notificationService;
 
     @Transactional
     public CoinTransaction transferCoins(Long fromUserId, Long toUserId,
@@ -71,7 +72,19 @@ public class TransferService {
         tx.setType(CoinTransactionType.PEER_THANKS);
         tx.setComment(comment);
         tx.setTag(tag);
-        return coinTxRepository.save(tx);
+        CoinTransaction saved = coinTxRepository.save(tx);
+
+        // Уведомление получателю о благодарности
+        notificationService.notifyUser(
+                toUserId,
+                "BONUS",
+                "Вам отправили благодарность",
+                "+" + amount.stripTrailingZeros().toPlainString() + " монет от " + fromUser.getName()
+                        + (comment != null && !comment.isBlank() ? ". «" + comment + "»" : ""),
+                saved.getId()
+        );
+
+        return saved;
     }
 
     @Transactional
@@ -142,12 +155,24 @@ public class TransferService {
         userRepository.save(toUser);
 
         CoinTransaction tx = new CoinTransaction();
-        tx.setFromUserId(actorId); // <-- ИСПРАВЛЕНИЕ: Теперь пишем id менеджера
+        tx.setFromUserId(actorId);
         tx.setToUserId(toUserId);
         tx.setAmount(amount);
         tx.setType(type);
         tx.setComment(comment);
-        return coinTxRepository.save(tx);
+        CoinTransaction saved = coinTxRepository.save(tx);
+
+        // Уведомление получателю о бонусе
+        notificationService.notifyUser(
+                toUserId,
+                "BONUS",
+                "Начислен бонус",
+                "+" + amount.stripTrailingZeros().toPlainString() + " монет от " + actor.getName()
+                        + (comment != null && !comment.isBlank() ? ". Комментарий: " + comment : ""),
+                saved.getId()
+        );
+
+        return saved;
     }
 
     private void validateBasic(Long fromUserId, Long toUserId, BigDecimal amount) {

@@ -11,23 +11,29 @@ import type { Department, UserListItem } from '../types'
 interface Props {
   onClose: () => void
   onCreated: () => void
+  defaultDeadline?: Date
 }
 
 type Mode = 'all' | 'departments' | 'users' | 'mixed'
 
-export default function CreateQuestModal({ onClose, onCreated }: Props) {
+export default function CreateQuestModal({ onClose, onCreated, defaultDeadline }: Props) {
   const me = useAuth((s) => s.user)!
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [rewardCoins, setRewardCoins] = useState(100)
   const [rewardRating, setRewardRating] = useState(0)
-  const [deadline, setDeadline] = useState('')
+  const [deadline, setDeadline] = useState(() => {
+    if (defaultDeadline) {
+      const pad = (n: number) => String(n).padStart(2, '0')
+      return `${defaultDeadline.getFullYear()}-${pad(defaultDeadline.getMonth() + 1)}-${pad(defaultDeadline.getDate())}T${pad(defaultDeadline.getHours())}:${pad(defaultDeadline.getMinutes())}`
+    }
+    return ''
+  })
   const [isMandatory, setIsMandatory] = useState(false)
   const [penaltyCoins, setPenaltyCoins] = useState(0)
   const [penaltyRating, setPenaltyRating] = useState(0)
-  
-  // Новые поля
+
   const [isRepeatable, setIsRepeatable] = useState(false)
   const [cooldownHours, setCooldownHours] = useState(24)
 

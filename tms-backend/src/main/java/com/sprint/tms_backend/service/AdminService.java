@@ -31,6 +31,7 @@ public class AdminService {
     private final RatingTransactionRepository ratingTxRepository;
     private final TreasuryService treasuryService;
     private final SettingsService settingsService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public AdminDashboardDTO getDashboard(Long actorId) {
@@ -75,7 +76,7 @@ public class AdminService {
                 t.getAssignee() != null ? t.getAssignee().getId() : null,
                 t.getAssignee() != null ? t.getAssignee().getName() : null,
                 t.getStatus(),
-                Boolean.TRUE.equals(t.getIsQuestRequest()),   // <-- добавлено
+                Boolean.TRUE.equals(t.getIsQuestRequest()),
                 t.getCreatedAt(),
                 t.getClosedAt(),
                 t.getRating(),
@@ -225,6 +226,18 @@ public class AdminService {
         reversal.setType(CoinTransactionType.REFUND);
         reversal.setComment("Отмена транзакции #" + original.getId() + ". Причина: " + reason);
         coinTxRepository.save(reversal);
+
+        // Уведомление получателю об отмене транзакции
+        if (toUser != null) {
+            notificationService.notifyUser(
+                    toUser.getId(),
+                    "REFUND",
+                    "Операция отменена",
+                    "С вашего баланса отменена операция на " + original.getAmount().stripTrailingZeros().toPlainString()
+                            + " монет. Причина: " + reason,
+                    original.getId()
+            );
+        }
     }
 
     @Transactional
@@ -279,6 +292,26 @@ public class AdminService {
         }
 
         userRepository.save(user);
+
+        // Уведомление о штрафе
+        StringBuilder parts = new StringBuilder();
+        if (request.coins() != null && request.coins().compareTo(BigDecimal.ZERO) > 0) {
+            parts.append("−").append(request.coins().stripTrailingZeros().toPlainString()).append(" монет");
+        }
+        if (request.rating() != null && request.rating() > 0) {
+            if (parts.length() > 0) parts.append(", ");
+            parts.append("−").append(request.rating()).append(" рейтинга");
+        }
+        if (parts.length() > 0) {
+            notificationService.notifyUser(
+                    user.getId(),
+                    "PENALTY",
+                    "Наложен штраф",
+                    parts + ". Причина: " + request.reason() + ". Наложил: " + actor.getName(),
+                    null
+            );
+        }
+
         log.info("{} наложил штраф на {}: {} монет, {} рейтинга", actor.getEmail(), user.getEmail(), request.coins(), request.rating());
     }
 

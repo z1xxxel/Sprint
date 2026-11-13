@@ -29,6 +29,8 @@ import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 import News from './pages/News'
 import NewsDetail from './pages/NewsDetail'
+import EconomyRules from './pages/EconomyRules'
+import Calendar from './pages/Calendar'
 
 function Protected({ children }: { children: ReactNode }) {
   const user = useAuth((s) => s.user)
@@ -74,6 +76,10 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
           <Route path="news" element={<News />} />
           <Route path="news/:id" element={<NewsDetail />} />
+          <Route path="economy" element={<EconomyRules />} />
+          <Route index element={<Dashboard />} />
+          <Route path="calendar" element={<Calendar />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>
