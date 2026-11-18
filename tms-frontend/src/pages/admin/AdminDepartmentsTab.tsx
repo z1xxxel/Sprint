@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useAuth } from '../../store/auth'
 import { useFetch } from '../../hooks/useFetch'
 import {
   getDepartments,
@@ -14,7 +13,6 @@ import type { Department, UserListItem } from '../../types'
 import { IconPlus, IconSearch } from '../../components/Icons'
 
 export default function AdminDepartmentsTab() {
-  const me = useAuth((s) => s.user)!
   const departments = useFetch(() => getDepartments(), [])
   const users = useFetch(() => getAllUsers(), [])
 
@@ -135,7 +133,6 @@ export default function AdminDepartmentsTab() {
 
       {creating && (
         <CreateDepartmentModal
-          actorId={me.id}
           onClose={() => setCreating(false)}
           onCreated={() => {
             setCreating(false)
@@ -157,11 +154,9 @@ export default function AdminDepartmentsTab() {
 }
 
 function CreateDepartmentModal({
-  actorId,
   onClose,
   onCreated,
 }: {
-  actorId: number
   onClose: () => void
   onCreated: () => void
 }) {

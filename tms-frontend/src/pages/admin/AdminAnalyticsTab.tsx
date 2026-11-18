@@ -7,7 +7,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  Cell,
 } from 'recharts'
 import { useFetch } from '../../hooks/useFetch'
 import { getAllUsers } from '../../api/users'
@@ -15,7 +14,6 @@ import { getDepartments } from '../../api/departments'
 import { getAdminDashboard } from '../../api/admin'
 import { getTreasury } from '../../api/treasury'
 import Avatar from '../../components/Avatar'
-import type { UserListItem } from '../../types'
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'Администратор',
@@ -163,7 +161,7 @@ export default function AdminAnalyticsTab() {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
-                formatter={(v: number) => [`${v} очков`, 'Рейтинг']}
+                formatter={(v) => [`${v} очков`, 'Рейтинг']}
               />
               <Bar dataKey="rating" fill="#6366f1" radius={[0, 4, 4, 0]} />
             </BarChart>
