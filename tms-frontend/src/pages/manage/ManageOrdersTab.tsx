@@ -217,7 +217,6 @@ export default function ManageOrdersTab() {
               order={order}
               statusBadge={STATUS_LABEL.APPROVED}
               statusColor={STATUS_COLOR.APPROVED}
-              processing={processing === order.id}
               actions={
                 <button
                   onClick={() => handleComplete(order.id, order.productName)}
