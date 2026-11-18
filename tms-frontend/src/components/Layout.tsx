@@ -33,11 +33,9 @@ import Avatar from './Avatar'
 import Toaster from './Toaster'
 import ConfirmHost from './ConfirmHost'
 import NotificationBell from './NotificationBell'
+import ReminderWatcher from './ReminderWatcher'
 import type { ReactNode } from 'react'
 
-// ==========================================
-// === Типы ===
-// ==========================================
 interface NavItem {
   to: string
   label: string
@@ -52,9 +50,6 @@ interface NavCategory {
   items: NavItem[]
 }
 
-// ==========================================
-// === Категории навигации ===
-// ==========================================
 const NAV_CATEGORIES: NavCategory[] = [
   {
     id: 'main',
@@ -114,9 +109,6 @@ const NAV_CATEGORIES: NavCategory[] = [
   },
 ]
 
-// ==========================================
-// === Layout ===
-// ==========================================
 export default function Layout() {
   const user = useAuth((s) => s.user)!
   const logout = useAuth((s) => s.logout)
@@ -137,10 +129,8 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-[#f5f7ff] dark:bg-[#0d1117] text-slate-800 dark:text-slate-200">
-      <header className="bg-white/95 dark:bg-[#161b22]/95 backdrop-blur-md border-b border-slate-200 dark:border-[#30363d] sticky top-0 z-20">
+      <header className="bg-white/95 dark:bg-[#161b22]/95 backdrop-blur-md border-b border-slate-200 dark:border-[#30363d] sticky top-0 z-40">
         <div className="relative px-4 sm:px-6 h-16 flex items-center">
-
-          {/* ЛЕВО: бургер + лого — прижато к краю */}
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setMobileOpen(true)}
@@ -159,7 +149,6 @@ export default function Layout() {
             </Link>
           </div>
 
-          {/* ЦЕНТР: навигация — абсолютно по центру окна */}
           <nav className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 z-10">
             {NAV_CATEGORIES.map((cat, i) => (
               <NavCategoryButton
@@ -173,7 +162,6 @@ export default function Layout() {
             ))}
           </nav>
 
-          {/* ПРАВО: действия — прижато к краю через ml-auto */}
           <div className="flex items-center gap-1 sm:gap-1.5 ml-auto shrink-0">
             <NotificationBell />
 
@@ -222,7 +210,6 @@ export default function Layout() {
         </div>
       </header>
 
-      {/* Мобильное меню */}
       {mobileOpen && (
         <MobileMenu
           user={user}
@@ -237,15 +224,13 @@ export default function Layout() {
         <Outlet />
       </main>
 
+      <ReminderWatcher />
       <Toaster />
       <ConfirmHost />
     </div>
   )
 }
 
-// ==========================================
-// === Кнопка категории в десктопной навигации ===
-// ==========================================
 function NavCategoryButton({
   category,
   userRole,
@@ -260,17 +245,40 @@ function NavCategoryButton({
   alignRight?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const { pathname } = useLocation()
 
   const visibleItems = category.items.filter(
     (item) => !item.roles || item.roles.includes(userRole)
   )
 
+  useEffect(() => {
+    function onMouseDown(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    if (open) document.addEventListener('mousedown', onMouseDown)
+    return () => document.removeEventListener('mousedown', onMouseDown)
+  }, [open])
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
   if (visibleItems.length === 0) return null
 
   const categoryIsActive = visibleItems.some((item) => isActive(item.to))
 
-  // Один пункт — простая ссылка (без dropdown)
   if (visibleItems.length === 1) {
     const item = visibleItems[0]
     return (
@@ -287,21 +295,10 @@ function NavCategoryButton({
     )
   }
 
-  function handleMouseEnter() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    setOpen(true)
-  }
-  function handleMouseLeave() {
-    timeoutRef.current = setTimeout(() => setOpen(false), 120)
-  }
-
   return (
-    <div
-      className="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div className="relative" ref={wrapperRef}>
       <button
+        type="button"
         onClick={() => setOpen((v) => !v)}
         className={`px-3.5 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition inline-flex items-center gap-1 ${
           categoryIsActive || open
@@ -357,9 +354,6 @@ function NavCategoryButton({
   )
 }
 
-// ==========================================
-// === Мобильное меню с аккордеоном ===
-// ==========================================
 function MobileMenu({
   user,
   cartCount,

@@ -375,6 +375,7 @@ export interface AdminQuestLog {
   userQuestId: number
   questId: number
   questTitle: string
+  questDescription: string | null   // ← добавь
   userId: number
   userName: string
   status: 'IN_PROGRESS' | 'PENDING_REVIEW' | 'COMPLETED' | 'REJECTED' | 'CANCELLED'
@@ -382,6 +383,8 @@ export interface AdminQuestLog {
   rewardRating: number | null
   penaltyCoins: number | null
   penaltyRating: number | null
+  deadline: string | null
+  deadlineOverride: string | null
   startedAt: string
   submittedAt: string | null
   completedAt: string | null

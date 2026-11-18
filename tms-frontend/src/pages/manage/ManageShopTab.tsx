@@ -4,7 +4,7 @@ import { useFetch } from '../../hooks/useFetch'
 import {
   getAdminProducts,
   deleteProduct,
-  hardDeleteProduct, // <-- ДОБАВЛЕНО
+  hardDeleteProduct,
   writeOffStock,
   restockProduct,
   getCategories,
@@ -14,6 +14,7 @@ import { confirmDialog } from '../../lib/confirm'
 import ProductModal from '../../components/ProductModal'
 import WriteOffModal from '../../components/WriteOffModal'
 import ProductMovementsModal from '../../components/ProductMovementsModal'
+import { IconPlus, IconSearch } from '../../components/Icons'
 import type { Product } from '../../types'
 
 type Tab = 'active' | 'hidden'
@@ -25,6 +26,7 @@ export default function ManageShopTab() {
 
   const [tab, setTab] = useState<Tab>('active')
   const [local, setLocal] = useState<Product[] | null>(null)
+  const [query, setQuery] = useState('')
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [restocking, setRestocking] = useState<Product | null>(null)
@@ -32,10 +34,19 @@ export default function ManageShopTab() {
   const [movementsProduct, setMovementsProduct] = useState<Product | null>(null)
 
   const list = local ?? products.data ?? []
-
   const activeList = useMemo(() => list.filter((p) => p.isActive), [list])
   const hiddenList = useMemo(() => list.filter((p) => !p.isActive), [list])
-  const displayed = tab === 'active' ? activeList : hiddenList
+
+  const displayed = useMemo(() => {
+    const base = tab === 'active' ? activeList : hiddenList
+    if (!query.trim()) return base
+    const q = query.toLowerCase()
+    return base.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.categoryName.toLowerCase().includes(q)
+    )
+  }, [tab, activeList, hiddenList, query])
 
   async function handleWriteOff(data: { quantity: number; reason: string; comment?: string }) {
     if (!writeOffProduct) return
@@ -60,11 +71,10 @@ export default function ManageShopTab() {
   async function handleHide(p: Product) {
     const ok = await confirmDialog({
       title: 'Скрыть товар?',
-      message: `Товар «${p.name}» будет перемещен во вкладку «Скрытые».`,
+      message: `Товар «${p.name}» будет скрыт из каталога.`,
       confirmLabel: 'Скрыть',
     })
     if (!ok) return
-
     try {
       await deleteProduct(p.id, user.id)
       setLocal(list.map((x) => (x.id === p.id ? { ...x, isActive: false } : x)))
@@ -77,16 +87,15 @@ export default function ManageShopTab() {
   async function handleHardDelete(p: Product) {
     const ok = await confirmDialog({
       title: 'Удалить навсегда?',
-      message: `Товар «${p.name}» будет полностью удален из базы данных. Это действие нельзя отменить. Если на товар есть заказы, удаление не пройдет.`,
+      message: `Товар «${p.name}» будет полностью удалён. Отменить нельзя.`,
       confirmLabel: 'Удалить навсегда',
       danger: true,
     })
     if (!ok) return
-
     try {
       await hardDeleteProduct(p.id, user.id)
       setLocal(list.filter((x) => x.id !== p.id))
-      notify.success(`Товар удален навсегда · ${p.name}`)
+      notify.success(`Товар удалён · ${p.name}`)
     } catch (e) {
       notify.error(e)
     }
@@ -108,140 +117,188 @@ export default function ManageShopTab() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="text-sm text-slate-500 dark:text-slate-400">
-          Всего товаров: {list.length}
-        </div>
-        <button
-          onClick={() => setCreating(true)}
-          className="bg-brand-600 hover:bg-brand-700 text-white rounded-md px-4 py-2 text-sm font-medium transition"
-        >
-          + Создать товар
-        </button>
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          Управление магазином
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          Товары, остатки и видимость в каталоге
+        </p>
       </div>
 
-      {/* Вкладки */}
-      <div className="border-b border-slate-200 dark:border-[#30363d]">
-        <div className="flex gap-1 -mb-px">
+      {/* Tabs + search + create */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-[#0d1117]">
           <button
             onClick={() => setTab('active')}
-            className={`px-4 py-2.5 text-sm font-medium transition border-b-2 flex items-center gap-2 ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition ${
               tab === 'active'
-                ? 'border-brand-600 text-brand-700 dark:text-brand-400'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#161b22] text-brand-700 dark:text-brand-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             Активные
-            {activeList.length > 0 && (
-              <span className="text-xs bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-400 px-1.5 py-0.5 rounded-full">
-                {activeList.length}
-              </span>
-            )}
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-[#21262d] text-slate-600 dark:text-slate-400 font-semibold min-w-[20px] text-center">
+              {activeList.length}
+            </span>
           </button>
           <button
             onClick={() => setTab('hidden')}
-            className={`px-4 py-2.5 text-sm font-medium transition border-b-2 flex items-center gap-2 ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition ${
               tab === 'hidden'
-                ? 'border-brand-600 text-brand-700 dark:text-brand-400'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#161b22] text-brand-700 dark:text-brand-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             Скрытые
             {hiddenList.length > 0 && (
-              <span className="text-xs bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 font-semibold min-w-[20px] text-center">
                 {hiddenList.length}
               </span>
             )}
           </button>
         </div>
+
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            <IconSearch size={14} />
+          </div>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Поиск по названию или категории..."
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#161b22] dark:text-white rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-brand-500"
+          />
+        </div>
+
+        <button
+          onClick={() => setCreating(true)}
+          className="ml-auto bg-brand-600 hover:bg-brand-700 text-white rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 shadow-sm transition"
+        >
+          <IconPlus size={14} />
+          Создать товар
+        </button>
       </div>
 
-      {products.loading && <div className="text-slate-500">Загрузка...</div>}
-      {products.error && <div className="text-red-600">{products.error}</div>}
-
-      {!products.loading && displayed.length === 0 && (
-        <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-8 sm:p-12 text-center">
-          <div className="text-slate-400 dark:text-slate-500 text-sm">
-            {tab === 'active' ? 'Активных товаров нет' : 'Скрытых товаров нет'}
-          </div>
+      {products.loading && (
+        <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-8 text-center text-slate-500">
+          Загрузка...
         </div>
       )}
 
-      <div className="space-y-2">
+      {!products.loading && displayed.length === 0 && (
+        <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-10 text-center">
+          <div className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+            {query
+              ? 'Ничего не нашли'
+              : tab === 'active'
+              ? 'Активных товаров нет'
+              : 'Скрытых товаров нет'}
+          </div>
+          {!query && tab === 'active' && (
+            <button
+              onClick={() => setCreating(true)}
+              className="mt-4 bg-brand-600 hover:bg-brand-700 text-white rounded-lg px-4 py-2 text-sm font-medium inline-flex items-center gap-1.5 transition"
+            >
+              <IconPlus size={14} />
+              Создать первый товар
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-2.5">
         {displayed.map((p) => (
           <div
             key={p.id}
-            className={`bg-white dark:bg-[#161b22] rounded-lg border border-slate-200 dark:border-[#30363d] p-4 flex flex-col sm:flex-row sm:items-center gap-3 transition ${
-              !p.isActive ? 'opacity-60 bg-slate-50 dark:bg-[#0d1117]/50' : ''
+            className={`bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-4 ${
+              !p.isActive ? 'opacity-80' : ''
             }`}
           >
-            <div className="w-12 h-12 rounded-md bg-slate-100 dark:bg-[#0d1117] shrink-0 overflow-hidden flex items-center justify-center">
-              {p.imageUrl ? (
-                <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-slate-300 text-xs">—</span>
-              )}
-            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-[#0d1117] shrink-0 overflow-hidden flex items-center justify-center">
+                {p.imageUrl ? (
+                  <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>
+                )}
+              </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="font-medium text-sm text-slate-900 dark:text-white truncate">
-                  {p.name}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                  <div className="font-semibold text-slate-900 dark:text-white truncate">
+                    {p.name}
+                  </div>
+                  {p.isOnDiscount && (
+                    <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold">
+                      −{p.discountPercent}%
+                    </span>
+                  )}
+                  {!p.isActive && (
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Скрыт
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  {p.categoryName} · {p.finalPrice.toFixed(0)} монет · Остаток:{' '}
+                  <span className={p.stock === 0 ? 'text-red-500 font-medium' : 'font-medium'}>
+                    {p.stock}
+                  </span>
+                  {p.hasVariants && ` · ${p.variants.length} вар.`}
                 </div>
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {p.categoryName} · {p.finalPrice.toFixed(0)} монет · остаток{' '}
-                <span className="font-medium">{p.stock}</span>
-                {p.hasVariants && ` · ${p.variants.length} вар.`}
-                {p.isOnDiscount && ` · −${p.discountPercent}%`}
-              </div>
             </div>
 
-            <div className="flex gap-1.5 flex-wrap">
-              <button
-                onClick={() => setMovementsProduct(p)}
-                className="text-xs px-2.5 py-1.5 border border-slate-300 dark:border-[#30363d] rounded text-slate-700 dark:text-slate-300 hover:border-brand-500 transition"
-              >
-                История
-              </button>
+            {/* Actions — текстовые, без иконок и рамок */}
+            <div className="flex flex-wrap items-center gap-1 mt-3 pt-3 border-t border-slate-100 dark:border-[#30363d]">
               <button
                 onClick={() => setEditing(p)}
-                className="text-xs px-2.5 py-1.5 border border-brand-400 dark:border-brand-500/50 text-brand-700 dark:text-brand-400 rounded hover:bg-brand-50 dark:hover:bg-brand-500/10 transition"
+                className="text-xs px-2.5 py-1 rounded-md text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10 font-medium transition"
               >
                 Изменить
               </button>
-              
-              {/* Кнопки, которые не нужны для скрытых товаров */}
-              {p.isActive && (
+              <button
+                onClick={() => setMovementsProduct(p)}
+                className="text-xs px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#21262d] transition"
+              >
+                История
+              </button>
+              {p.isActive ? (
                 <>
                   <button
                     onClick={() => setRestocking(p)}
-                    className="text-xs px-2.5 py-1.5 border border-slate-300 dark:border-[#30363d] rounded text-slate-700 dark:text-slate-300 hover:border-brand-500 transition"
+                    className="text-xs px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#21262d] transition"
                   >
                     Пополнить
                   </button>
                   <button
                     onClick={() => setWriteOffProduct(p)}
-                    className="text-xs px-2.5 py-1.5 border border-slate-300 dark:border-[#30363d] rounded text-slate-700 dark:text-slate-300 hover:border-brand-500 transition"
+                    className="text-xs px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#21262d] transition"
                   >
                     Списать
                   </button>
                   <button
                     onClick={() => handleHide(p)}
-                    className="text-xs px-2.5 py-1.5 border border-amber-300 dark:border-amber-500/30 rounded text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition"
+                    className="text-xs px-2.5 py-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#21262d] transition"
                   >
                     Скрыть
                   </button>
                 </>
+              ) : (
+                <button
+                  onClick={() => setEditing(p)}
+                  className="text-xs px-2.5 py-1 rounded-md text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition"
+                >
+                  Восстановить
+                </button>
               )}
-
-              {/* Кнопка полного удаления (доступна всем в этой вкладке) */}
               <button
                 onClick={() => handleHardDelete(p)}
-                className="text-xs px-2.5 py-1.5 border border-red-300 dark:border-red-500/30 rounded text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
+                className="ml-auto text-xs px-2.5 py-1 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
               >
-                Удалить навсегда
+                Удалить
               </button>
             </div>
           </div>
@@ -256,7 +313,6 @@ export default function ManageShopTab() {
           onSaved={handleSaved}
         />
       )}
-
       {editing && (
         <ProductModal
           product={editing}
@@ -266,7 +322,6 @@ export default function ManageShopTab() {
           onSaved={handleSaved}
         />
       )}
-
       {restocking && (
         <RestockModal
           product={restocking}
@@ -275,7 +330,6 @@ export default function ManageShopTab() {
           onDone={(amount) => handleRestockDone(restocking.id, amount)}
         />
       )}
-
       {writeOffProduct && (
         <WriteOffModal
           productName={writeOffProduct.name}
@@ -284,7 +338,6 @@ export default function ManageShopTab() {
           onWriteOff={handleWriteOff}
         />
       )}
-
       {movementsProduct && (
         <ProductMovementsModal
           productId={movementsProduct.id}
@@ -326,8 +379,7 @@ function RestockModal({
       await restockProduct(product.id, actorId, amount, variantId ?? undefined)
       onDone(amount)
     } catch (e: any) {
-      const msg = e.response?.data || 'Не удалось пополнить'
-      setError(msg)
+      setError(e.response?.data || 'Не удалось пополнить')
       notify.error(e)
     } finally {
       setLoading(false)
@@ -348,17 +400,13 @@ function RestockModal({
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             Пополнить остаток
           </h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {product.name}
-          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{product.name}</p>
         </div>
-
         {error && (
           <div className="bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-sm p-3 rounded border border-red-200 dark:border-red-500/30">
             {error}
           </div>
         )}
-
         {product.hasVariants && (
           <div>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -377,7 +425,6 @@ function RestockModal({
             </select>
           </div>
         )}
-
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Сколько добавить?
@@ -390,13 +437,8 @@ function RestockModal({
             className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
           />
         </div>
-
         <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300"
-          >
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300">
             Отмена
           </button>
           <button

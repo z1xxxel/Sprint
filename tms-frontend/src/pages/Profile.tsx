@@ -70,39 +70,56 @@ export default function Profile() {
       .catch(() => {})
   }, [user.id])
 
-  const ratingChartData = useMemo(() => {
-    if (!ratingHistory.data) return []
+    const ratingChartData = useMemo(() => {
+    if (!ratingHistory.data || !p) return []
     const sorted = [...ratingHistory.data].reverse()
-    let sum = 0
+    const totalDelta = sorted.reduce((s, t) => s + t.amount, 0)
+    let running = p.currentRating - totalDelta
     return sorted.map((t) => {
-      sum += t.amount
+      running += t.amount
       return {
-        date: new Date(t.createdAt).toLocaleDateString('ru-RU', {
+        value: Math.max(0, Math.round(running * 10) / 10),
+        amount: t.amount,
+        reason: t.reason,
+        date: new Date(t.createdAt).toLocaleString('ru-RU', {
           day: '2-digit',
           month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
         }),
-        value: Math.max(0, Math.round(sum * 10) / 10),
       }
     })
-  }, [ratingHistory.data])
+  }, [ratingHistory.data, p])
 
   const balanceChartData = useMemo(() => {
-    if (!balanceHistory.data) return []
+    if (!balanceHistory.data || !p) return []
     const sorted = [...balanceHistory.data].reverse()
-    let sum = 0
+    const deltaOf = (t: CoinTx) => {
+      const isOut =
+        t.fromUserId === user.id &&
+        t.type !== 'MANAGER_BONUS' &&
+        t.type !== 'ADMIN_ADJUSTMENT'
+      return isOut ? -t.amount : t.amount
+    }
+    const totalDelta = sorted.reduce((s, t) => s + deltaOf(t), 0)
+    let running = p.balance - totalDelta
     return sorted.map((t) => {
-      const isOut = t.fromUserId === user.id && t.type !== 'MANAGER_BONUS' && t.type !== 'ADMIN_ADJUSTMENT'
-      const delta = isOut ? -t.amount : t.amount
-      sum += delta
+      running += deltaOf(t)
       return {
-        date: new Date(t.createdAt).toLocaleDateString('ru-RU', {
+        value: Math.max(0, Math.round(running * 100) / 100),
+        amount: deltaOf(t),
+        reason: t.comment || t.type,
+        date: new Date(t.createdAt).toLocaleString('ru-RU', {
           day: '2-digit',
           month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
         }),
-        value: Math.max(0, Math.round(sum * 100) / 100),
       }
     })
-  }, [balanceHistory.data, user.id])
+  }, [balanceHistory.data, user.id, p])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -278,7 +295,7 @@ export default function Profile() {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={balanceChartData}>
+            <AreaChart data={balanceChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
@@ -286,22 +303,16 @@ export default function Profile() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#94a3b8" tickLine={false} />
               <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" tickLine={false} width={40} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                }}
-              />
+              <Tooltip content={<ChartTooltip mode="balance" />} />
               <Area
                 type="monotone"
                 dataKey="value"
                 stroke="#f59e0b"
                 strokeWidth={2}
                 fill="url(#balanceGradient)"
+                dot={{ r: 3, fill: '#f59e0b', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#f59e0b', strokeWidth: 2, stroke: '#fff' }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -379,7 +390,7 @@ export default function Profile() {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={ratingChartData}>
+            <AreaChart data={ratingChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="ratingGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
@@ -387,22 +398,16 @@ export default function Profile() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#94a3b8" tickLine={false} />
-              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" tickLine={false} width={30} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                }}
-              />
+              <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" tickLine={false} width={40} />
+              <Tooltip content={<ChartTooltip mode="rating" />} />
               <Area
                 type="monotone"
                 dataKey="value"
                 stroke="#10b981"
                 strokeWidth={2}
                 fill="url(#ratingGradient)"
+                dot={{ r: 3, fill: '#10b981', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -657,6 +662,50 @@ function StatCard({
           <span className="text-xs text-slate-400 dark:text-slate-500">{suffix}</span>
         </div>
       </div>
+    </div>
+  )
+}
+
+function ChartTooltip({
+  active,
+  payload,
+  mode,
+}: {
+  active?: boolean
+  payload?: any[]
+  mode: 'balance' | 'rating'
+}) {
+  if (!active || !payload || !payload.length) return null
+  const data = payload[0].payload
+  const amount = data.amount ?? 0
+  const isPositive = amount > 0
+  const isZero = amount === 0
+  const decimals = mode === 'rating' ? 1 : 0
+  const unit = mode === 'rating' ? 'рейтинга' : 'монет'
+
+  return (
+    <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-[#30363d] rounded-lg px-3 py-2 text-xs shadow-lg min-w-[150px]">
+      <div className="text-slate-500 dark:text-slate-400 mb-1">{data.date}</div>
+      <div className="font-semibold text-slate-900 dark:text-white">
+        {data.value.toFixed(decimals)} {unit}
+      </div>
+      {!isZero && (
+        <div
+          className={`text-[11px] mt-0.5 ${
+            isPositive
+              ? 'text-emerald-600 dark:text-emerald-400'
+              : 'text-red-600 dark:text-red-400'
+          }`}
+        >
+          {isPositive ? '+' : ''}
+          {amount.toFixed(decimals)}
+        </div>
+      )}
+      {data.reason && (
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+          {data.reason}
+        </div>
+      )}
     </div>
   )
 }

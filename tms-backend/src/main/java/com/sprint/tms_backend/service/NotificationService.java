@@ -39,4 +39,15 @@ public class NotificationService {
     public void markAllRead(Long userId) {
         repo.markAllReadByUserId(userId);
     }
+
+    @Transactional
+    public void markRead(Long notificationId, Long userId) {
+        UserNotification n = repo.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Уведомление не найдено"));
+        if (!n.getUserId().equals(userId)) {
+            throw new SecurityException("Это не ваше уведомление");
+        }
+        n.setIsRead(true);
+        repo.save(n);
+    }
 }

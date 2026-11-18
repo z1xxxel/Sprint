@@ -38,4 +38,7 @@ public class UserQuest {
 
     @Column(length = 500)
     private String adminComment;
+
+    @Column(name = "deadline_override")
+    private LocalDateTime deadlineOverride;
 }

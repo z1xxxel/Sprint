@@ -31,4 +31,12 @@ public class NotificationController {
         service.markAllRead(userId);
         return ResponseEntity.ok("OK");
     }
+
+    @PutMapping("/{id}/read")
+    public ResponseEntity<String> markRead(
+            @PathVariable Long id,
+            @RequestParam Long actorId) {
+        service.markRead(id, actorId);
+        return ResponseEntity.ok("OK");
+    }
 }

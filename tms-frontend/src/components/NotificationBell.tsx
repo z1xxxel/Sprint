@@ -10,6 +10,7 @@ import { getEvents } from '../api/events'
 import {
   getMyNotifications,
   getUnreadNotificationsCount,
+  markNotificationRead,
   markAllNotificationsRead,
   type UserNotification,
 } from '../api/notifications'
@@ -61,26 +62,14 @@ export default function NotificationBell() {
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
 
-  // обычные счётчики
   const [chats, setChats] = useState(0)
   const [pendingTickets, setPendingTickets] = useState(0)
   const [pendingOrders, setPendingOrders] = useState(0)
   const [pendingQuests, setPendingQuests] = useState(0)
   const [pendingEvents, setPendingEvents] = useState(0)
 
-  // системные уведомления
   const [notifications, setNotifications] = useState<UserNotification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-
-  const storageKey = `tms:notifications:seen:${me.id}`
-  const [seenTotal, setSeenTotal] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem(storageKey)
-      return saved ? Number(saved) : 0
-    } catch {
-      return 0
-    }
-  })
 
   const isSupport = can.manageTickets(me.role)
   const isManager = can.manageOrders(me.role)
@@ -94,11 +83,11 @@ export default function NotificationBell() {
     cancelledRef.current = false
     const tasks: Promise<void>[] = []
 
-    // системные уведомления — для всех ролей
+    // Все уведомления — без ограничения до 10
     tasks.push(
       getMyNotifications(me.id)
         .then((list) => {
-          if (!cancelledRef.current) setNotifications(list.slice(0, 10))
+          if (!cancelledRef.current) setNotifications(list)
         })
         .catch(() => {})
     )
@@ -110,7 +99,6 @@ export default function NotificationBell() {
         .catch(() => {})
     )
 
-    // чаты
     tasks.push(
       getMyChats(me.id)
         .then((list) => {
@@ -244,42 +232,37 @@ export default function NotificationBell() {
     return arr
   }, [chats, pendingOrders, pendingEvents, pendingQuests, pendingTickets])
 
+  // Показываем только НЕПРОЧИТАННЫЕ уведомления
+  const unreadNotifications = useMemo(
+    () => notifications.filter((n) => !n.isRead),
+    [notifications]
+  )
+
   const itemsTotal = items.reduce((s, i) => s + i.count, 0)
   const total = itemsTotal + unreadCount
 
-  // подрезка localStorage при снижении количества
-  useEffect(() => {
-    if (total < seenTotal) {
-      setSeenTotal(total)
-      try {
-        localStorage.setItem(storageKey, String(total))
-      } catch {
-        // ignore
-      }
+  async function handleNotificationClick(n: UserNotification) {
+    // Помечаем прочитанным на сервере
+    markNotificationRead(n.id).catch(() => {})
+    // Убираем из локального списка
+    setNotifications((prev) => prev.filter((x) => x.id !== n.id))
+    setUnreadCount((prev) => Math.max(0, prev - 1))
+    // Навигация в зависимости от типа
+    setOpen(false)
+    if (n.type === 'PENALTY' || n.type === 'BONUS' || n.type === 'REFUND') {
+      nav('/history/coins')
     }
-  }, [total, seenTotal, storageKey])
+  }
 
-  const badgeCount = Math.max(0, total - seenTotal)
-
-  function handleBellClick() {
-    if (!open) {
-      setSeenTotal(total)
-      try {
-        localStorage.setItem(storageKey, String(total))
-      } catch {
-        // ignore
-      }
-      // помечаем системные уведомления прочитанными на сервере
-      if (unreadCount > 0) {
-        markAllNotificationsRead(me.id)
-          .then(() => {
-            setUnreadCount(0)
-            setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
-          })
-          .catch(() => {})
-      }
+  async function handleMarkAllRead() {
+    if (unreadCount === 0) return
+    try {
+      await markAllNotificationsRead(me.id)
+      setNotifications([])
+      setUnreadCount(0)
+    } catch {
+      // ignore
     }
-    setOpen((v) => !v)
   }
 
   function handleItemClick(path: string) {
@@ -287,18 +270,11 @@ export default function NotificationBell() {
     nav(path)
   }
 
-  function openNotification(n: UserNotification) {
-    setOpen(false)
-    if (n.type === 'PENALTY' || n.type === 'BONUS' || n.type === 'REFUND') {
-      nav('/history/coins')
-    }
-  }
-
   return (
     <div className="relative" ref={wrapperRef}>
       <button
         type="button"
-        onClick={handleBellClick}
+        onClick={() => setOpen((v) => !v)}
         title="Уведомления"
         className={`relative p-2 rounded-md transition ${
           open
@@ -307,9 +283,9 @@ export default function NotificationBell() {
         }`}
       >
         <IconBell size={18} />
-        {badgeCount > 0 && (
+        {total > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
-            {badgeCount > 99 ? '99+' : badgeCount}
+            {total > 99 ? '99+' : total}
           </span>
         )}
       </button>
@@ -320,27 +296,30 @@ export default function NotificationBell() {
             <div className="font-semibold text-sm text-slate-900 dark:text-white">
               Уведомления
             </div>
-            {total > 0 && (
-              <div className="text-xs text-slate-500 dark:text-slate-400">{total}</div>
+            {unreadNotifications.length > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium"
+              >
+                Прочитать всё
+              </button>
             )}
           </div>
 
           <div className="max-h-[500px] overflow-y-auto">
-            {/* Системные уведомления */}
-            {notifications.length > 0 && (
+            {/* Системные уведомления — только непрочитанные */}
+            {unreadNotifications.length > 0 && (
               <div className="border-b border-slate-200 dark:border-[#30363d]">
                 <div className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
                   От системы
                 </div>
-                {notifications.map((n) => {
+                {unreadNotifications.map((n) => {
                   const style = NOTIF_STYLE[n.type] ?? NOTIF_STYLE.SYSTEM
                   return (
                     <button
                       key={n.id}
-                      onClick={() => openNotification(n)}
-                      className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-[#0d1117] transition text-left border-b border-slate-100 dark:border-[#30363d] last:border-0 ${
-                        !n.isRead ? 'bg-brand-50/40 dark:bg-brand-500/5' : ''
-                      }`}
+                      onClick={() => handleNotificationClick(n)}
+                      className="w-full flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-[#0d1117] transition text-left border-b border-slate-100 dark:border-[#30363d] last:border-0"
                     >
                       <div
                         className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${COLOR_CLASSES[style.color]}`}
@@ -350,9 +329,6 @@ export default function NotificationBell() {
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
                           {n.title}
-                          {!n.isRead && (
-                            <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-brand-500 align-middle" />
-                          )}
                         </div>
                         {n.message && (
                           <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
@@ -377,7 +353,7 @@ export default function NotificationBell() {
             {/* Очереди и чаты */}
             {items.length > 0 ? (
               <>
-                {notifications.length > 0 && (
+                {unreadNotifications.length > 0 && (
                   <div className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
                     Требует внимания
                   </div>
@@ -404,7 +380,7 @@ export default function NotificationBell() {
                   </button>
                 ))}
               </>
-            ) : notifications.length === 0 ? (
+            ) : unreadNotifications.length === 0 ? (
               <div className="p-8 text-center">
                 <div className="flex justify-center mb-2 text-brand-400">
                   <IconCheck size={32} />

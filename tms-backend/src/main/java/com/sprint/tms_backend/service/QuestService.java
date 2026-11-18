@@ -23,9 +23,14 @@ public class QuestService {
     private final RatingTransactionRepository ratingTxRepository;
     private final TreasuryService treasuryService;
     private final EconomyLimitService economyLimitService;
+    private final SettingsService settingsService;
+
+    // ==========================================
+    // === СОЗДАНИЕ КВЕСТОВ (void!)
+    // ==========================================
 
     @Transactional
-    public Quest createQuest(CreateQuestRequest request) {
+    public void createQuest(CreateQuestRequest request) {
         User creator = userRepository.findById(request.creatorId())
                 .orElseThrow(() -> new RuntimeException("Создатель не найден"));
 
@@ -34,6 +39,11 @@ public class QuestService {
         }
         if (request.rewardCoins() == null || request.rewardCoins().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Награда должна быть больше нуля");
+        }
+
+        BigDecimal maxReward = settingsService.getDecimal("limit.quest.max-reward", new BigDecimal("5000"));
+        if (request.rewardCoins().compareTo(maxReward) > 0) {
+            throw new RuntimeException("Награда за квест не может превышать " + maxReward + " монет");
         }
 
         Quest quest = new Quest();
@@ -47,19 +57,11 @@ public class QuestService {
         quest.setIsMandatory(false);
         quest.setAudienceDescription("Все сотрудники");
 
-        return questRepository.save(quest);
+        questRepository.save(quest);
     }
 
-    private final SettingsService settingsService;
-
     @Transactional
-    public Quest createQuestWithAudience(CreateQuestWithAudienceRequest req) {
-
-        // В начале метода createQuestWithAudience
-        BigDecimal maxReward = settingsService.getDecimal("limit.quest.max-reward", new BigDecimal("5000"));
-        if (req.rewardCoins().compareTo(maxReward) > 0) {
-            throw new RuntimeException("Награда за квест не может превышать " + maxReward + " монет (настраивается в админке)");
-        }
+    public void createQuestWithAudience(CreateQuestWithAudienceRequest req) {
 
         User creator = userRepository.findById(req.creatorId())
                 .orElseThrow(() -> new RuntimeException("Создатель не найден"));
@@ -70,6 +72,11 @@ public class QuestService {
 
         if (req.rewardCoins() == null || req.rewardCoins().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Награда должна быть больше нуля");
+        }
+
+        BigDecimal maxReward = settingsService.getDecimal("limit.quest.max-reward", new BigDecimal("5000"));
+        if (req.rewardCoins().compareTo(maxReward) > 0) {
+            throw new RuntimeException("Награда за квест не может превышать " + maxReward + " монет (настраивается в админке)");
         }
 
         Double rewardRating = req.rewardRating() != null ? req.rewardRating() : 0.0;
@@ -100,6 +107,8 @@ public class QuestService {
         quest.setCreator(creator);
         quest.setIsActive(true);
         quest.setAudienceDescription(audienceDescription);
+        quest.setIsRepeatable(Boolean.TRUE.equals(req.isRepeatable()));
+        quest.setCooldownHours(req.cooldownHours());
 
         Quest saved = questRepository.save(quest);
 
@@ -117,8 +126,6 @@ public class QuestService {
                 userQuestRepository.save(uq);
             }
         }
-
-        return saved;
     }
 
     private String buildAudienceDescription(
@@ -164,8 +171,12 @@ public class QuestService {
         return ids;
     }
 
+    // ==========================================
+    // === ОБНОВЛЕНИЕ / ПРОДЛЕНИЕ (void!)
+    // ==========================================
+
     @Transactional
-    public Quest updateQuest(Long questId, UpdateQuestRequest req) {
+    public void updateQuest(Long questId, UpdateQuestRequest req) {
         User actor = userRepository.findById(req.actorId())
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         if (!actor.getRole().has(Permission.QUEST_MANAGE)) {
@@ -188,12 +199,14 @@ public class QuestService {
         if (req.deadline() != null) q.setDeadline(req.deadline());
         if (req.penaltyCoins() != null) q.setPenaltyCoins(req.penaltyCoins());
         if (req.penaltyRating() != null) q.setPenaltyRating(req.penaltyRating());
+        if (req.isRepeatable() != null) q.setIsRepeatable(req.isRepeatable());
+        if (req.cooldownHours() != null) q.setCooldownHours(req.cooldownHours());
 
-        return questRepository.save(q);
+        questRepository.save(q);
     }
 
     @Transactional
-    public Quest extendDeadline(Long questId, Long actorId, LocalDateTime newDeadline) {
+    public void extendDeadline(Long questId, Long actorId, LocalDateTime newDeadline) {
         User actor = userRepository.findById(actorId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
         if (!actor.getRole().has(Permission.QUEST_MANAGE)) {
@@ -202,8 +215,34 @@ public class QuestService {
         Quest q = questRepository.findById(questId)
                 .orElseThrow(() -> new RuntimeException("Квест не найден"));
         q.setDeadline(newDeadline);
-        return questRepository.save(q);
+        questRepository.save(q);
     }
+
+    @Transactional
+    public void extendUserQuestDeadline(Long userQuestId, Long actorId, LocalDateTime newDeadline) {
+        checkManagerRights(actorId);
+
+        UserQuest uq = userQuestRepository.findById(userQuestId)
+                .orElseThrow(() -> new RuntimeException("Прохождение не найдено"));
+
+        if (uq.getStatus() == QuestProgressStatus.COMPLETED
+                || uq.getStatus() == QuestProgressStatus.CANCELLED) {
+            throw new RuntimeException(
+                    "Нельзя продлить дедлайн: квест уже " +
+                            (uq.getStatus() == QuestProgressStatus.COMPLETED ? "завершён" : "отменён"));
+        }
+
+        if (newDeadline.isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Новый дедлайн должен быть в будущем");
+        }
+
+        uq.setDeadlineOverride(newDeadline);
+        userQuestRepository.save(uq);
+    }
+
+    // ==========================================
+    // === ПОЛУЧЕНИЕ
+    // ==========================================
 
     @Transactional(readOnly = true)
     public List<AdminQuestParticipantDTO> getQuestParticipants(Long questId, Long actorId) {
@@ -245,6 +284,7 @@ public class QuestService {
                         uq.getId(),
                         uq.getQuest().getId(),
                         uq.getQuest().getTitle(),
+                        uq.getQuest().getDescription(),
                         uq.getUser().getId(),
                         uq.getUser().getName(),
                         uq.getStatus(),
@@ -252,6 +292,8 @@ public class QuestService {
                         uq.getQuest().getRewardRating(),
                         uq.getQuest().getPenaltyCoins(),
                         uq.getQuest().getPenaltyRating(),
+                        uq.getQuest().getDeadline(),
+                        uq.getDeadlineOverride(),
                         uq.getStartedAt(),
                         uq.getSubmittedAt(),
                         uq.getCompletedAt(),
@@ -262,6 +304,10 @@ public class QuestService {
                 ))
                 .toList();
     }
+
+    // ==========================================
+    // === ШТРАФЫ
+    // ==========================================
 
     @Transactional
     public Map<String, Object> applyQuestPenalty(Long questId, ApplyQuestPenaltyRequest req) {
@@ -274,13 +320,20 @@ public class QuestService {
         Quest quest = questRepository.findById(questId)
                 .orElseThrow(() -> new RuntimeException("Квест не найден"));
 
-        BigDecimal penaltyCoins = Boolean.TRUE.equals(req.applyCoins()) && quest.getPenaltyCoins() != null
-                ? quest.getPenaltyCoins() : BigDecimal.ZERO;
-        Double penaltyRating = Boolean.TRUE.equals(req.applyRating()) && quest.getPenaltyRating() != null
-                ? quest.getPenaltyRating() : 0.0;
+        BigDecimal penaltyCoins = Boolean.TRUE.equals(req.applyCoins())
+                ? (req.coinsAmount() != null
+                   ? req.coinsAmount()
+                   : (quest.getPenaltyCoins() != null ? quest.getPenaltyCoins() : BigDecimal.ZERO))
+                : BigDecimal.ZERO;
 
-        if (penaltyCoins.compareTo(BigDecimal.ZERO) == 0 && penaltyRating == 0.0) {
-            throw new RuntimeException("Штраф не задан — нечего применять");
+        Double penaltyRating = Boolean.TRUE.equals(req.applyRating())
+                ? (req.ratingAmount() != null
+                   ? req.ratingAmount()
+                   : (quest.getPenaltyRating() != null ? quest.getPenaltyRating() : 0.0))
+                : 0.0;
+
+        if (penaltyCoins.compareTo(BigDecimal.ZERO) <= 0 && penaltyRating <= 0) {
+            throw new RuntimeException("Укажите сумму штрафа");
         }
 
         List<UserQuest> participants;
@@ -354,6 +407,81 @@ public class QuestService {
         return result;
     }
 
+    // ==========================================
+    // === ПРИНУДИТЕЛЬНОЕ ЗАВЕРШЕНИЕ
+    // ==========================================
+
+    @Transactional
+    public void forceRejectUserQuest(Long userQuestId, Long actorId, Boolean applyPenalty, String reason) {
+        checkManagerRights(actorId);
+
+        UserQuest uq = userQuestRepository.findById(userQuestId)
+                .orElseThrow(() -> new RuntimeException("Прохождение не найдено"));
+
+        if (uq.getStatus() == QuestProgressStatus.COMPLETED
+                || uq.getStatus() == QuestProgressStatus.CANCELLED
+                || uq.getStatus() == QuestProgressStatus.REJECTED) {
+            throw new RuntimeException("Квест уже нельзя завершить: текущий статус " + uq.getStatus());
+        }
+
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Укажите причину");
+        }
+
+        User user = uq.getUser();
+        Quest quest = uq.getQuest();
+        boolean penaltyApplied = false;
+
+        if (Boolean.TRUE.equals(applyPenalty)) {
+            BigDecimal penaltyCoins = quest.getPenaltyCoins() != null
+                    ? quest.getPenaltyCoins() : BigDecimal.ZERO;
+            Double penaltyRating = quest.getPenaltyRating() != null
+                    ? quest.getPenaltyRating() : 0.0;
+
+            if (penaltyCoins.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal bal = user.getBalance() != null ? user.getBalance() : BigDecimal.ZERO;
+                if (bal.compareTo(penaltyCoins) >= 0) {
+                    user.setBalance(bal.subtract(penaltyCoins));
+                    treasuryService.fundTreasury(penaltyCoins);
+
+                    CoinTransaction tx = new CoinTransaction();
+                    tx.setFromUserId(user.getId());
+                    tx.setToUserId(null);
+                    tx.setAmount(penaltyCoins);
+                    tx.setType(CoinTransactionType.PENALTY);
+                    tx.setComment("Штраф за просроченный квест «" + quest.getTitle() + "»: " + reason.trim());
+                    coinTxRepository.save(tx);
+                    penaltyApplied = true;
+                }
+            }
+
+            if (penaltyRating > 0) {
+                double cur = user.getRating() != null ? user.getRating() : 0.0;
+                double newR = Math.max(0, cur - penaltyRating);
+                user.setRating(newR);
+
+                RatingTransaction rt = new RatingTransaction();
+                rt.setUserId(user.getId());
+                rt.setAmount(-penaltyRating);
+                rt.setReason("Штраф за просроченный квест «" + quest.getTitle() + "»: " + reason.trim());
+                ratingTxRepository.save(rt);
+                penaltyApplied = true;
+            }
+
+            if (penaltyApplied) {
+                userRepository.save(user);
+            }
+        }
+
+        uq.setStatus(QuestProgressStatus.REJECTED);
+        uq.setAdminComment(reason.trim() + (penaltyApplied ? " (со штрафом)" : " (без штрафа)"));
+        userQuestRepository.save(uq);
+    }
+
+    // ==========================================
+    // === УДАЛЕНИЕ
+    // ==========================================
+
     @Transactional
     public void deleteQuest(Long questId, Long actorId) {
         User actor = userRepository.findById(actorId)
@@ -367,31 +495,50 @@ public class QuestService {
         questRepository.save(quest);
     }
 
+    // ==========================================
+    // === ДОСТУПНЫЕ КВЕСТЫ ДЛЯ ПОЛЬЗОВАТЕЛЯ
+    // ==========================================
+
     @Transactional(readOnly = true)
     public List<QuestResponseDTO> getAvailableQuests(Long userId) {
         List<Quest> activeQuests = questRepository.findByIsActiveTrue();
         List<QuestResponseDTO> result = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
 
         for (Quest q : activeQuests) {
-            // Берем ПОСЛЕДНЕЕ прохождение
-            UserQuest progress = userQuestRepository.findTopByUserIdAndQuestIdOrderByIdDesc(userId, q.getId()).orElse(null);
+            UserQuest progress = userQuestRepository
+                    .findTopByUserIdAndQuestIdOrderByIdDesc(userId, q.getId())
+                    .orElse(null);
 
             if (!Boolean.TRUE.equals(q.getIsPublic()) && progress == null) {
-                continue; // Если квест скрытый и юзер его не брал — пропускаем
+                continue;
+            }
+
+            LocalDateTime effectiveDeadline = q.getDeadline();
+            if (progress != null && progress.getDeadlineOverride() != null) {
+                effectiveDeadline = progress.getDeadlineOverride();
+            }
+
+            boolean expired = effectiveDeadline != null && effectiveDeadline.isBefore(now);
+            boolean hasActiveProgress = progress != null
+                    && (progress.getStatus() == QuestProgressStatus.IN_PROGRESS
+                    || progress.getStatus() == QuestProgressStatus.PENDING_REVIEW);
+
+            if (expired && !Boolean.TRUE.equals(q.getIsRepeatable()) && !hasActiveProgress) {
+                continue;
             }
 
             QuestProgressStatus status = progress != null ? progress.getStatus() : null;
             String comment = progress != null ? progress.getAdminComment() : null;
             LocalDateTime nextAvailableAt = null;
 
-            // ЛОГИКА КУЛДАУНА
             if (status == QuestProgressStatus.COMPLETED && Boolean.TRUE.equals(q.getIsRepeatable())) {
                 if (q.getCooldownHours() == null || q.getCooldownHours() <= 0) {
-                    status = null; // Нет кулдауна — сразу доступен
-                } else if (progress.getCompletedAt() != null) {
+                    status = null;
+                } else if (progress != null && progress.getCompletedAt() != null) {
                     nextAvailableAt = progress.getCompletedAt().plusHours(q.getCooldownHours());
                     if (LocalDateTime.now().isAfter(nextAvailableAt)) {
-                        status = null; // Время прошло, снова доступен
+                        status = null;
                         nextAvailableAt = null;
                     }
                 }
@@ -400,7 +547,8 @@ public class QuestService {
             result.add(new QuestResponseDTO(
                     q.getId(), q.getTitle(), q.getDescription(), q.getRewardCoins(),
                     q.getRewardRating(),
-                    q.getDeadline(), q.getIsMandatory(), q.getPenaltyCoins(), q.getPenaltyRating(),
+                    effectiveDeadline,
+                    q.getIsMandatory(), q.getPenaltyCoins(), q.getPenaltyRating(),
                     status, comment,
                     q.getIsRepeatable(), q.getCooldownHours(), nextAvailableAt
             ));
@@ -408,24 +556,32 @@ public class QuestService {
         return result;
     }
 
+    // ==========================================
+    // === ПРОХОЖДЕНИЕ
+    // ==========================================
+
     @Transactional
     public void startQuest(Long questId, Long userId) {
         Quest quest = questRepository.findById(questId).orElseThrow();
         User user = userRepository.findById(userId).orElseThrow();
 
-        UserQuest lastProgress = userQuestRepository.findTopByUserIdAndQuestIdOrderByIdDesc(userId, questId).orElse(null);
+        UserQuest lastProgress = userQuestRepository
+                .findTopByUserIdAndQuestIdOrderByIdDesc(userId, questId)
+                .orElse(null);
 
         if (lastProgress != null) {
-            if (lastProgress.getStatus() == QuestProgressStatus.IN_PROGRESS || lastProgress.getStatus() == QuestProgressStatus.PENDING_REVIEW) {
+            if (lastProgress.getStatus() == QuestProgressStatus.IN_PROGRESS
+                    || lastProgress.getStatus() == QuestProgressStatus.PENDING_REVIEW) {
                 throw new RuntimeException("Вы уже выполняете этот квест");
             }
             if (lastProgress.getStatus() == QuestProgressStatus.COMPLETED) {
                 if (!Boolean.TRUE.equals(quest.getIsRepeatable())) {
                     throw new RuntimeException("Этот квест нельзя проходить повторно");
                 }
-                // Проверка кулдауна
-                if (quest.getCooldownHours() != null && quest.getCooldownHours() > 0 && lastProgress.getCompletedAt() != null) {
-                    LocalDateTime availableAt = lastProgress.getCompletedAt().plusHours(quest.getCooldownHours());
+                if (quest.getCooldownHours() != null && quest.getCooldownHours() > 0
+                        && lastProgress.getCompletedAt() != null) {
+                    LocalDateTime availableAt = lastProgress.getCompletedAt()
+                            .plusHours(quest.getCooldownHours());
                     if (LocalDateTime.now().isBefore(availableAt)) {
                         throw new RuntimeException("Квест будет доступен после " + availableAt);
                     }
@@ -433,7 +589,7 @@ public class QuestService {
             }
         }
 
-        UserQuest uq = new UserQuest(); // Создаем НОВУЮ запись
+        UserQuest uq = new UserQuest();
         uq.setUser(user);
         uq.setQuest(quest);
         uq.setStatus(QuestProgressStatus.IN_PROGRESS);
@@ -442,7 +598,8 @@ public class QuestService {
 
     @Transactional
     public void submitQuest(Long questId, Long userId) {
-        UserQuest uq = userQuestRepository.findTopByUserIdAndQuestIdOrderByIdDesc(userId, questId)
+        UserQuest uq = userQuestRepository
+                .findTopByUserIdAndQuestIdOrderByIdDesc(userId, questId)
                 .orElseThrow(() -> new RuntimeException("Вы не брали этот квест"));
 
         if (uq.getStatus() != QuestProgressStatus.IN_PROGRESS
@@ -454,6 +611,10 @@ public class QuestService {
         uq.setAdminComment(null);
         userQuestRepository.save(uq);
     }
+
+    // ==========================================
+    // === ПРОВЕРКА (модерация)
+    // ==========================================
 
     @Transactional(readOnly = true)
     public List<UserQuestForReview> getQuestsForReview(Long actorId) {

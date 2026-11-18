@@ -2,11 +2,20 @@ import { useState } from 'react'
 import { createSurvey, type SurveyCreateQuestion } from '../api/surveys'
 import { IconPlus, IconTrash, IconX } from './Icons'
 
+interface AnchorRect {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
 interface Props {
   actorId: number
   onClose: () => void
   onCreated: () => void
   defaultDeadline?: Date
+  compact?: boolean
+  anchorRect?: AnchorRect | null
 }
 
 interface OptionInput {
@@ -34,6 +43,8 @@ export default function SurveyCreateModal({
   onClose,
   onCreated,
   defaultDeadline,
+  compact,
+  anchorRect,
 }: Props) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -77,7 +88,9 @@ export default function SurveyCreateModal({
   function addOption(qi: number) {
     setQuestions((prev) =>
       prev.map((q, i) =>
-        i === qi ? { ...q, options: [...q.options, { text: '', value: q.options.length + 1 }] } : q
+        i === qi
+          ? { ...q, options: [...q.options, { text: '', value: q.options.length + 1 }] }
+          : q
       )
     )
   }
@@ -148,6 +161,272 @@ export default function SurveyCreateModal({
     }
   }
 
+  // === Общий контент формы ===
+  const formContent = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2
+            className={
+              compact
+                ? 'text-base font-semibold text-slate-900 dark:text-white'
+                : 'text-lg font-semibold text-slate-900 dark:text-white'
+            }
+          >
+            Новый опрос
+          </h2>
+          {compact && defaultDeadline && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {defaultDeadline.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                weekday: 'short',
+              })}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1 shrink-0"
+        >
+          <IconX size={compact ? 16 : 18} />
+        </button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-xs sm:text-sm p-2.5 rounded border border-red-100 dark:border-red-500/20">
+          {error}
+        </div>
+      )}
+
+      <div className={compact ? 'space-y-2.5' : 'space-y-4'}>
+        <div>
+          <label className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+            Название *
+          </label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            autoFocus
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-2.5 sm:px-3 py-1.5 sm:py-2 mt-1 text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+            Описание
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={compact ? 1 : 2}
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-2.5 sm:px-3 py-1.5 sm:py-2 mt-1 text-xs sm:text-sm focus:outline-none focus:border-brand-500 resize-none"
+          />
+        </div>
+      </div>
+
+      <div className={compact ? 'space-y-2.5' : 'grid grid-cols-1 sm:grid-cols-3 gap-3'}>
+        <div>
+          <label className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+            Дедлайн *
+          </label>
+          <input
+            type="datetime-local"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+            required
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-2.5 sm:px-3 py-1.5 sm:py-2 mt-1 text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+          />
+        </div>
+        <div>
+          <label className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+            + Рейтинг за прохождение
+          </label>
+          <input
+            type="number"
+            value={rewardRating}
+            onChange={(e) => setRewardRating(Number(e.target.value))}
+            min={0}
+            step={0.5}
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-2.5 sm:px-3 py-1.5 sm:py-2 mt-1 text-xs sm:text-sm"
+          />
+        </div>
+        <div>
+          <label className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+            − Рейтинг за непрохождение
+          </label>
+          <input
+            type="number"
+            value={penaltyRating}
+            onChange={(e) => setPenaltyRating(Number(e.target.value))}
+            max={0}
+            step={0.5}
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-2.5 sm:px-3 py-1.5 sm:py-2 mt-1 text-xs sm:text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
+          Вопросы ({questions.length})
+        </div>
+
+        {questions.map((q, qi) => (
+          <div
+            key={qi}
+            className="border border-slate-200 dark:border-[#30363d] rounded-lg p-2.5 space-y-1.5"
+          >
+            <div className="flex items-start gap-2">
+              <span className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 shrink-0 mt-1.5">
+                #{qi + 1}
+              </span>
+              <input
+                value={q.text}
+                onChange={(e) => updateQuestion(qi, { text: e.target.value })}
+                placeholder="Текст вопроса"
+                className="flex-1 border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+              />
+              {questions.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeQuestion(qi)}
+                  className="text-red-500 hover:text-red-700 p-1.5"
+                  title="Удалить вопрос"
+                >
+                  <IconTrash size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="pl-6 space-y-1.5">
+              {q.options.map((o, oi) => (
+                <div key={oi} className="flex items-center gap-1.5">
+                  <input
+                    value={o.text}
+                    onChange={(e) => updateOption(qi, oi, { text: e.target.value })}
+                    placeholder={`Вариант ${oi + 1}`}
+                    className="flex-1 border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-2.5 sm:px-3 py-1 text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                  />
+                  <input
+                    type="number"
+                    value={o.value}
+                    onChange={(e) => updateOption(qi, oi, { value: Number(e.target.value) })}
+                    title="Балл"
+                    className="w-12 sm:w-16 border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-1.5 sm:px-2 py-1 text-xs sm:text-sm text-center"
+                  />
+                  {q.options.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => removeOption(qi, oi)}
+                      className="text-red-500 hover:text-red-700 p-1"
+                      title="Удалить вариант"
+                    >
+                      <IconX size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => addOption(qi)}
+                className="text-[10px] sm:text-xs text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-1"
+              >
+                <IconPlus size={11} /> Добавить вариант
+              </button>
+            </div>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={addQuestion}
+          className="w-full border border-dashed border-slate-300 dark:border-[#30363d] rounded-lg py-1.5 sm:py-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition inline-flex items-center justify-center gap-1"
+        >
+          <IconPlus size={12} /> Добавить вопрос
+        </button>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#30363d] sticky bottom-0 bg-white dark:bg-[#161b22] pb-1">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300"
+        >
+          Отмена
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-brand-600 hover:bg-brand-700 text-white rounded-md px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium disabled:opacity-50 transition"
+        >
+          {loading ? '...' : 'Создать'}
+        </button>
+      </div>
+    </>
+  )
+
+  // ==========================================
+  // === Compact + anchorRect → popover сбоку ===
+  // ==========================================
+  if (compact && anchorRect) {
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1200
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 800
+    const GAP = 8
+    const W = 540
+    const PREFERRED_H = 760
+
+    let left = anchorRect.left + anchorRect.width + GAP
+    if (left + W > winW - GAP) {
+      left = anchorRect.left - W - GAP
+      if (left < GAP) left = Math.max(GAP, (winW - W) / 2)
+    }
+
+    let top = Math.max(GAP, anchorRect.top)
+    let maxH = Math.min(PREFERRED_H, winH - top - GAP)
+
+    if (maxH < 450) {
+      top = GAP
+      maxH = Math.min(PREFERRED_H, winH - 2 * GAP)
+    }
+
+    return (
+      <div
+        className="fixed z-[60] animate-slide-down"
+        style={{ top, left, width: W }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] shadow-2xl p-4 space-y-3 overflow-y-auto"
+          style={{ maxHeight: maxH }}
+        >
+          {formContent}
+        </form>
+      </div>
+    )
+  }
+
+  // Compact без anchor → центрированная
+  if (compact) {
+    return (
+      <div
+        className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+        onClick={onClose}
+      >
+        <form
+          onSubmit={handleSubmit}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white dark:bg-[#161b22] rounded-xl w-full max-w-md p-5 space-y-3 max-h-[90vh] overflow-y-auto"
+        >
+          {formContent}
+        </form>
+      </div>
+    )
+  }
+
+  // Полный режим
   return (
     <div
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto"
@@ -158,186 +437,7 @@ export default function SurveyCreateModal({
         onClick={(e) => e.stopPropagation()}
         className="bg-white dark:bg-[#161b22] rounded-xl w-full max-w-2xl p-6 space-y-4 my-8"
       >
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-            Новый опрос
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1"
-          >
-            <IconX size={18} />
-          </button>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-sm p-3 rounded border border-red-100 dark:border-red-500/20">
-            {error}
-          </div>
-        )}
-
-        <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Название *
-          </label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm focus:outline-none focus:border-brand-500"
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Описание
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm focus:outline-none focus:border-brand-500 resize-none"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="sm:col-span-1">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Дедлайн *
-            </label>
-            <input
-              type="datetime-local"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              required
-              className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm focus:outline-none focus:border-brand-500"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              + Рейтинг за прохождение
-            </label>
-            <input
-              type="number"
-              value={rewardRating}
-              onChange={(e) => setRewardRating(Number(e.target.value))}
-              min={0}
-              step={0.5}
-              className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              - Рейтинг за непрохождение
-            </label>
-            <input
-              type="number"
-              value={penaltyRating}
-              onChange={(e) => setPenaltyRating(Number(e.target.value))}
-              max={0}
-              step={0.5}
-              className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-slate-900 dark:text-white">
-            Вопросы ({questions.length})
-          </div>
-
-          {questions.map((q, qi) => (
-            <div
-              key={qi}
-              className="border border-slate-200 dark:border-[#30363d] rounded-lg p-3 space-y-2"
-            >
-              <div className="flex items-start gap-2">
-                <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0 mt-2">
-                  #{qi + 1}
-                </span>
-                <input
-                  value={q.text}
-                  onChange={(e) => updateQuestion(qi, { text: e.target.value })}
-                  placeholder="Текст вопроса"
-                  className="flex-1 border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-brand-500"
-                />
-                {questions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeQuestion(qi)}
-                    className="text-red-500 hover:text-red-700 p-2"
-                    title="Удалить вопрос"
-                  >
-                    <IconTrash size={16} />
-                  </button>
-                )}
-              </div>
-
-              <div className="pl-6 space-y-2">
-                {q.options.map((o, oi) => (
-                  <div key={oi} className="flex items-center gap-2">
-                    <input
-                      value={o.text}
-                      onChange={(e) => updateOption(qi, oi, { text: e.target.value })}
-                      placeholder={`Вариант ${oi + 1}`}
-                      className="flex-1 border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-1.5 text-sm focus:outline-none focus:border-brand-500"
-                    />
-                    <input
-                      type="number"
-                      value={o.value}
-                      onChange={(e) => updateOption(qi, oi, { value: Number(e.target.value) })}
-                      title="Балл"
-                      className="w-16 border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-2 py-1.5 text-sm text-center"
-                    />
-                    {q.options.length > 2 && (
-                      <button
-                        type="button"
-                        onClick={() => removeOption(qi, oi)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                        title="Удалить вариант"
-                      >
-                        <IconX size={14} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => addOption(qi)}
-                  className="text-xs text-brand-600 dark:text-brand-400 hover:underline inline-flex items-center gap-1"
-                >
-                  <IconPlus size={12} /> Добавить вариант
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={addQuestion}
-            className="w-full border border-dashed border-slate-300 dark:border-[#30363d] rounded-lg py-2 text-sm text-slate-600 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition inline-flex items-center justify-center gap-1"
-          >
-            <IconPlus size={14} /> Добавить вопрос
-          </button>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-[#30363d]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300"
-          >
-            Отмена
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-brand-600 hover:bg-brand-700 text-white rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 transition"
-          >
-            {loading ? 'Создание...' : 'Создать'}
-          </button>
-        </div>
+        {formContent}
       </form>
     </div>
   )

@@ -11,7 +11,8 @@ public enum UserRole {
             Permission.EVENT_EDIT_OWN,
             Permission.COIN_TRANSFER,
             Permission.TICKET_CREATE,
-            Permission.CATALOG_VIEW
+            Permission.CATALOG_VIEW,
+            Permission.QUEST_PARTICIPATE
     )),
 
     ORGANIZER(EnumSet.of(
@@ -19,19 +20,25 @@ public enum UserRole {
             Permission.EVENT_EDIT_OWN,
             Permission.EVENT_EDIT_ANY,
             Permission.COIN_TRANSFER,
-            Permission.CATALOG_VIEW
+            Permission.CATALOG_VIEW,
+            Permission.QUEST_PARTICIPATE
     )),
 
     MANAGER(EnumSet.of(
             Permission.EVENT_CREATE,
             Permission.EVENT_EDIT_OWN,
+            Permission.EVENT_EDIT_ANY,
+            Permission.EVENT_APPROVE,
+            Permission.EVENT_VIEW_ANY,
             Permission.COIN_TRANSFER,
             Permission.COIN_GRANT_SUBORDINATE,
             Permission.CATALOG_VIEW,
             Permission.CATALOG_MANAGE,
             Permission.ORDER_MANAGE,
             Permission.QUEST_MANAGE,
-            Permission.QUEST_PARTICIPATE
+            Permission.QUEST_PARTICIPATE,
+            Permission.TICKET_CREATE,
+            Permission.NEWS_MANAGE
     )),
 
     SUPPORT(EnumSet.of(
@@ -44,16 +51,20 @@ public enum UserRole {
     )),
 
     HR(EnumSet.of(
-            Permission.EVENT_APPROVE,
+            Permission.EVENT_CREATE,
+            Permission.EVENT_EDIT_OWN,
             Permission.EVENT_EDIT_ANY,
+            Permission.EVENT_APPROVE,
             Permission.EVENT_VIEW_ANY,
             Permission.COIN_TRANSFER,
+            Permission.COIN_GRANT_SUBORDINATE,
             Permission.USER_MANAGE,
             Permission.ORDER_MANAGE,
             Permission.CATALOG_MANAGE,
             Permission.CATALOG_VIEW,
             Permission.QUEST_MANAGE,
             Permission.QUEST_PARTICIPATE,
+            Permission.TICKET_MANAGE,
             Permission.TICKET_CREATE,
             Permission.NEWS_MANAGE
     )),

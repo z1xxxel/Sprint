@@ -12,6 +12,8 @@ import { notify } from '../../lib/notify'
 import RejectOrderModal from '../../components/RejectOrderModal'
 import type { OrderResponse } from '../../types'
 
+type Tab = 'pending' | 'approved' | 'history'
+
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Ожидает',
   APPROVED: 'Одобрен',
@@ -21,10 +23,11 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  PENDING: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30',
-  APPROVED: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30',
-  COMPLETED: 'bg-brand-50 text-brand-700 border-brand-200 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/30',
-  REJECTED: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30',
+  PENDING: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+  APPROVED: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+  COMPLETED: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  REJECTED: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+  CANCELLED: 'bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-400',
 }
 
 export default function ManageOrdersTab() {
@@ -36,19 +39,23 @@ export default function ManageOrdersTab() {
   const [all, setAll] = useState<OrderResponse[] | null>(null)
   const [processing, setProcessing] = useState<number | null>(null)
   const [rejectingOrder, setRejectingOrder] = useState<OrderResponse | null>(null)
+  const [tab, setTab] = useState<Tab>('pending')
 
   const pendingList = pending ?? pendingData.data ?? []
   const allList = all ?? allData.data ?? []
 
   const queue = pendingList.filter((o) => o.status === 'PENDING')
-  const history = allList.filter((o) => o.status !== 'PENDING')
+  const approved = allList.filter((o) => o.status === 'APPROVED')
+  const history = allList.filter(
+    (o) => o.status === 'COMPLETED' || o.status === 'REJECTED' || o.status === 'CANCELLED'
+  )
 
   async function handleApprove(orderId: number, productName: string) {
     setProcessing(orderId)
     try {
       const updated = await approveOrder(orderId, user.id)
       setPending(pendingList.filter((o) => o.id !== orderId))
-      setAll(allList.map((o) => (o.id === updated.id ? updated : o)))
+      setAll([...allList, updated])
       notify.success(`Заказ одобрен · ${productName}`)
     } catch (e) {
       notify.error(e)
@@ -61,7 +68,6 @@ export default function ManageOrdersTab() {
     setProcessing(orderId)
     try {
       const updated = await completeOrder(orderId, user.id)
-      setPending(pendingList.filter((o) => o.id !== orderId))
       setAll(allList.map((o) => (o.id === updated.id ? updated : o)))
       notify.success(`Заказ выдан · ${productName}`)
     } catch (e) {
@@ -90,106 +96,249 @@ export default function ManageOrdersTab() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Очередь */}
+    <div className="space-y-5">
       <div>
-        <div className="text-sm text-slate-500 dark:text-slate-400 mb-3">В очереди: {queue.length}</div>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          Заказы сотрудников
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          Обрабатывайте заказы из магазина и выдавайте товары
+        </p>
+      </div>
 
-        {pendingData.loading && <div className="text-slate-500">Загрузка...</div>}
-        {pendingData.error && <div className="text-red-600">{pendingData.error}</div>}
+      <div className="inline-flex p-1 rounded-xl bg-slate-100 dark:bg-[#0d1117]">
+        <button
+          onClick={() => setTab('pending')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition ${
+            tab === 'pending'
+              ? 'bg-white dark:bg-[#161b22] text-brand-700 dark:text-brand-400 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          В очереди
+          {queue.length > 0 && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-semibold min-w-[20px] text-center">
+              {queue.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab('approved')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition ${
+            tab === 'approved'
+              ? 'bg-white dark:bg-[#161b22] text-brand-700 dark:text-brand-400 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          Готовы к выдаче
+          {approved.length > 0 && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 font-semibold min-w-[20px] text-center">
+              {approved.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab('history')}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition ${
+            tab === 'history'
+              ? 'bg-white dark:bg-[#161b22] text-brand-700 dark:text-brand-400 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          История
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-200 dark:bg-[#21262d] text-slate-600 dark:text-slate-400 font-semibold min-w-[20px] text-center">
+            {history.length}
+          </span>
+        </button>
+      </div>
 
-        {!pendingData.loading && queue.length === 0 && (
-          <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-8 sm:p-12 text-center">
-            <div className="text-slate-400 dark:text-slate-500 text-sm">Нет заказов в очереди</div>
-          </div>
-        )}
+      {(pendingData.loading || allData.loading) && (
+        <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-8 text-center text-slate-500">
+          Загрузка...
+        </div>
+      )}
 
-        <div className="space-y-3">
+      {/* Пустые состояния */}
+      {tab === 'pending' && !pendingData.loading && queue.length === 0 && (
+        <EmptyState
+          title="Очередь пуста"
+          subtitle="Нет заказов, ожидающих обработки"
+        />
+      )}
+      {tab === 'approved' && !allData.loading && approved.length === 0 && (
+        <EmptyState
+          title="Нет заказов к выдаче"
+          subtitle="Одобренные заказы будут ждать вас здесь"
+        />
+      )}
+      {tab === 'history' && !allData.loading && history.length === 0 && (
+        <EmptyState
+          title="История пуста"
+          subtitle="Завершённые и отклонённые заказы появятся здесь"
+        />
+      )}
+
+      {/* Pending */}
+      {tab === 'pending' && queue.length > 0 && (
+        <div className="space-y-2.5">
           {queue.map((order) => (
-            <div key={order.id} className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-4 sm:p-5 flex flex-col gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="font-medium text-slate-900 dark:text-white">{order.productName}</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">× {order.quantity}</span>
-                  {order.variantSize && <span className="text-xs text-slate-500 dark:text-slate-400">({order.variantSize}{order.variantColor ? ` / ${order.variantColor}` : ''})</span>}
-                </div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">
-                  <span className="font-medium">{order.userName}</span> · {order.totalPrice.toFixed(0)} монет
-                </div>
-                <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">{new Date(order.createdAt).toLocaleString('ru-RU')}</div>
-
-                {/* Комментарий пользователя */}
-                {order.userComment && (
-                  <div className="mt-2 text-sm px-3 py-2 rounded bg-slate-50 dark:bg-[#0d1117] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#30363d]">
-                    <span className="font-medium text-slate-900 dark:text-white">Комментарий: </span>
-                    {order.userComment}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-2 shrink-0 self-end">
-                <button onClick={() => handleApprove(order.id, order.productName)} disabled={processing === order.id} className="bg-brand-600 hover:bg-brand-700 text-white text-sm px-4 py-2 rounded-md font-medium disabled:opacity-50">Одобрить</button>
-                <button onClick={() => setRejectingOrder(order)} disabled={processing === order.id} className="border border-red-300 dark:border-red-500/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 text-sm px-4 py-2 rounded-md font-medium disabled:opacity-50">Отклонить</button>
-              </div>
-            </div>
+            <OrderCard
+              key={order.id}
+              order={order}
+              processing={processing === order.id}
+              actions={
+                <>
+                  <button
+                    onClick={() => handleApprove(order.id, order.productName)}
+                    disabled={processing === order.id}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition"
+                  >
+                    Одобрить
+                  </button>
+                  <button
+                    onClick={() => setRejectingOrder(order)}
+                    disabled={processing === order.id}
+                    className="flex-1 border border-slate-300 dark:border-[#30363d] text-slate-600 dark:text-slate-300 hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition"
+                  >
+                    Отклонить
+                  </button>
+                </>
+              }
+            />
           ))}
         </div>
-      </div>
+      )}
 
-      {/* История */}
-      <div>
-        <div className="text-sm text-slate-500 dark:text-slate-400 mb-3">История заказов: {history.length}</div>
+      {/* Approved */}
+      {tab === 'approved' && approved.length > 0 && (
+        <div className="space-y-2.5">
+          {approved.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              statusBadge={STATUS_LABEL.APPROVED}
+              statusColor={STATUS_COLOR.APPROVED}
+              processing={processing === order.id}
+              actions={
+                <button
+                  onClick={() => handleComplete(order.id, order.productName)}
+                  disabled={processing === order.id}
+                  className="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm px-4 py-2 rounded-lg font-medium disabled:opacity-50 transition"
+                >
+                  {processing === order.id ? '...' : 'Выдать заказ'}
+                </button>
+              }
+            />
+          ))}
+        </div>
+      )}
 
-        {allData.loading && <div className="text-slate-500">Загрузка...</div>}
-
-        {!allData.loading && history.length === 0 && (
-          <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-6 text-center">
-            <div className="text-slate-400 dark:text-slate-500 text-sm">Пока нет обработанных заказов</div>
-          </div>
-        )}
-
-        <div className="space-y-2">
+      {/* History */}
+      {tab === 'history' && history.length > 0 && (
+        <div className="space-y-2.5">
           {history.map((order) => (
-            <div key={order.id} className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-4 flex flex-col gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="font-medium text-sm text-slate-900 dark:text-white">{order.productName}</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">× {order.quantity}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded border font-medium ${STATUS_COLOR[order.status] || STATUS_COLOR.PENDING}`}>
-                    {STATUS_LABEL[order.status] || order.status}
-                  </span>
-                </div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">
-                  <span className="font-medium">{order.userName}</span> · {order.totalPrice.toFixed(0)} монет
-                </div>
-                <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">{new Date(order.createdAt).toLocaleString('ru-RU')}</div>
-
-                {/* Комментарии */}
-                {order.userComment && (
-                  <div className="mt-2 text-xs px-2 py-1.5 rounded bg-slate-50 dark:bg-[#0d1117] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-[#30363d]">
-                    <span className="font-medium">Комментарий клиента: </span>{order.userComment}
-                  </div>
-                )}
-                {order.adminComment && (
-                  <div className={`mt-2 text-xs px-2 py-1.5 rounded border ${
-                    order.status === 'REJECTED' ? 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30' 
-                    : 'bg-slate-50 dark:bg-[#0d1117] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-[#30363d]'}`}>
-                    <span className="font-medium">{order.status === 'REJECTED' ? 'Причина: ' : 'Комментарий: '}</span>{order.adminComment}
-                  </div>
-                )}
-              </div>
-
-              {order.status === 'APPROVED' && (
-                <button onClick={() => handleComplete(order.id, order.productName)} disabled={processing === order.id} className="self-end bg-brand-600 hover:bg-brand-700 text-white text-sm px-4 py-2 rounded-md font-medium disabled:opacity-50 shrink-0">Завершить</button>
-              )}
-            </div>
+            <OrderCard
+              key={order.id}
+              order={order}
+              statusBadge={STATUS_LABEL[order.status]}
+              statusColor={STATUS_COLOR[order.status]}
+            />
           ))}
         </div>
-      </div>
+      )}
 
       {rejectingOrder && (
-        <RejectOrderModal productName={rejectingOrder.productName} onClose={() => setRejectingOrder(null)} onReject={handleReject} />
+        <RejectOrderModal
+          productName={rejectingOrder.productName}
+          onClose={() => setRejectingOrder(null)}
+          onReject={handleReject}
+        />
       )}
+    </div>
+  )
+}
+
+function OrderCard({
+  order,
+  processing,
+  statusBadge,
+  statusColor,
+  actions,
+}: {
+  order: OrderResponse
+  processing?: boolean
+  statusBadge?: string
+  statusColor?: string
+  actions?: React.ReactNode
+}) {
+  return (
+    <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-4">
+      <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-slate-900 dark:text-white">
+              {order.productName}
+              <span className="text-sm text-slate-500 dark:text-slate-400 font-normal ml-1.5">
+                × {order.quantity}
+              </span>
+            </h3>
+            {statusBadge && (
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColor}`}>
+                {statusBadge}
+              </span>
+            )}
+          </div>
+          <div className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+            <span className="font-medium">{order.userName}</span>
+            {' · '}
+            <span className="text-amber-600 dark:text-amber-400 font-semibold">
+              {order.totalPrice.toFixed(0)} монет
+            </span>
+            {order.variantSize && (
+              <span className="text-slate-500 dark:text-slate-400">
+                {' · '}
+                {order.variantSize}
+                {order.variantColor ? ` / ${order.variantColor}` : ''}
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            {new Date(order.createdAt).toLocaleString('ru-RU')}
+          </div>
+        </div>
+      </div>
+
+      {order.userComment && (
+        <div className="text-sm px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#0d1117] text-slate-700 dark:text-slate-300 mb-3">
+          <span className="font-medium">Комментарий клиента: </span>
+          {order.userComment}
+        </div>
+      )}
+      {order.adminComment && (
+        <div
+          className={`text-sm px-3 py-2 rounded-lg mb-3 ${
+            order.status === 'REJECTED'
+              ? 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400'
+              : 'bg-slate-50 dark:bg-[#0d1117] text-slate-700 dark:text-slate-300'
+          }`}
+        >
+          <span className="font-medium">
+            {order.status === 'REJECTED' ? 'Причина: ' : 'Ответ: '}
+          </span>
+          {order.adminComment}
+        </div>
+      )}
+
+      {actions && <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-[#30363d]">{actions}</div>}
+    </div>
+  )
+}
+
+function EmptyState({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-10 text-center">
+      <div className="text-sm font-semibold text-slate-600 dark:text-slate-300">{title}</div>
+      <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">{subtitle}</div>
     </div>
   )
 }

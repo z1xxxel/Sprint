@@ -47,6 +47,8 @@ export interface ApplyQuestPenaltyPayload {
   userIds: number[] | null
   applyCoins: boolean
   applyRating: boolean
+  coinsAmount: number | null   // NEW
+  ratingAmount: number | null  // NEW
   reason: string
 }
 
@@ -120,3 +122,28 @@ export const submitQuest = (questId: number, userId: number) =>
 
 export const deleteQuest = (questId: number, actorId: number) =>
   api.delete(`/quests/${questId}`, { params: { actorId } }).then((r) => r.data)
+
+export const extendUserQuestDeadline = (
+  userQuestId: number,
+  actorId: number,
+  newDeadline: string
+) =>
+  api
+    .put(`/quests/admin/user-quests/${userQuestId}/extend-deadline`, null, {
+      params: { actorId, newDeadline },
+    })
+    .then((r) => r.data)
+
+export const forceRejectUserQuest = (
+  userQuestId: number,
+  actorId: number,
+  applyPenalty: boolean,
+  reason: string
+) =>
+  api
+    .put(`/quests/admin/user-quests/${userQuestId}/force-reject`, {
+      actorId,
+      applyPenalty,
+      reason,
+    })
+    .then((r) => r.data)

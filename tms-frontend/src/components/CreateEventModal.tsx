@@ -3,6 +3,7 @@ import { createEvent } from '../api/events'
 import { useAuth } from '../store/auth'
 import { notify } from '../lib/notify'
 import { IconX } from './Icons'
+import { can } from '../lib/permissions'
 
 interface AnchorRect {
   top: number
@@ -20,7 +21,8 @@ interface Props {
   anchorRect?: AnchorRect | null
   canCreateQuest?: boolean
   canCreateSurvey?: boolean
-  onSwitchType?: (type: 'event' | 'quest' | 'survey') => void
+  canCreateNote?: boolean
+  onSwitchType?: (type: 'event' | 'quest' | 'survey' | 'note') => void
   onPreviewChange?: (from: Date | null, to: Date | null, title: string) => void
   onClose: () => void
   onCreated: () => void
@@ -47,25 +49,23 @@ export default function CreateEventModal({
   anchorRect,
   canCreateQuest,
   canCreateSurvey,
+  canCreateNote,
   onSwitchType,
   onPreviewChange,
   onClose,
   onCreated,
 }: Props) {
   const user = useAuth((s) => s.user)!
-  const canSetRewards = ['ADMIN', 'HR'].includes(user.role)
+  const canSetRewards = can.approveEvents(user.role)
 
   const [nameEvent, setNameEvent] = useState('')
   const [category, setCategory] = useState('IT')
   const [description, setDescription] = useState('')
   const [eventPlace, setEventPlace] = useState('')
-
   const [fromTime, setFromTime] = useState(toLocalInput(defaultFrom))
   const [toTime, setToTime] = useState(toLocalInput(defaultTo))
-
   const [fromTimeOnly, setFromTimeOnly] = useState(toHHMM(defaultFrom) || '10:00')
   const [toTimeOnly, setToTimeOnly] = useState(toHHMM(defaultTo) || '11:00')
-
   const [commentToAdmin, setCommentToAdmin] = useState('')
   const [paidInCoins, setPaidInCoins] = useState(false)
   const [rewardCoins, setRewardCoins] = useState(100)
@@ -73,33 +73,22 @@ export default function CreateEventModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // === Превью в календаре ===
   useEffect(() => {
     if (!hideDate || !onPreviewChange) return
     const baseDate = defaultFrom ?? new Date()
     const dateStr = `${baseDate.getFullYear()}-${pad(baseDate.getMonth() + 1)}-${pad(baseDate.getDate())}`
     const from = new Date(`${dateStr}T${fromTimeOnly}:00`)
     const to = new Date(`${dateStr}T${toTimeOnly}:00`)
-    if (
-      !isNaN(from.getTime()) &&
-      !isNaN(to.getTime()) &&
-      from.getTime() < to.getTime()
-    ) {
+    if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && from.getTime() < to.getTime()) {
       onPreviewChange(from, to, nameEvent)
     } else {
       onPreviewChange(null, null, nameEvent)
     }
   }, [fromTimeOnly, toTimeOnly, nameEvent, defaultFrom, hideDate, onPreviewChange])
 
-  // === Cleanup при unmount: гарантированно убираем превью ===
-  useEffect(() => {
-    return () => {
-      onPreviewChange?.(null, null, '')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // ВАЖНО: cleanup удалён — иначе при переключении на "Заметку" preview стирается
+  // и блок в календаре пропадает
 
-  // === Escape ===
   useEffect(() => {
     if (!compact) return
     const handler = (e: KeyboardEvent) => {
@@ -119,16 +108,14 @@ export default function CreateEventModal({
     if (hideDate) {
       const baseDate = defaultFrom ?? new Date()
       const dateStr = `${baseDate.getFullYear()}-${pad(baseDate.getMonth() + 1)}-${pad(baseDate.getDate())}`
-
       if (!fromTimeOnly || !toTimeOnly) {
         setError('Укажите время начала и окончания')
         return
       }
       finalFrom = `${dateStr}T${fromTimeOnly}:00`
       finalTo = `${dateStr}T${toTimeOnly}:00`
-
       if (finalFrom >= finalTo) {
-        setError('Время окончания должно быть позже начала')
+        setError('Конец должен быть позже начала')
         return
       }
     } else {
@@ -173,15 +160,26 @@ export default function CreateEventModal({
     }
   }
 
+  // Switcher options
+  const switcherOptions: { id: 'event' | 'quest' | 'survey' | 'note'; label: string }[] = [
+    { id: 'event', label: 'Событие' },
+  ]
+  if (canCreateQuest) switcherOptions.push({ id: 'quest', label: 'Квест' })
+  if (canCreateSurvey) switcherOptions.push({ id: 'survey', label: 'Опрос' })
+  if (canCreateNote) switcherOptions.push({ id: 'note', label: 'Заметка' })
+
+  const showSwitcher = switcherOptions.length > 1 && !!onSwitchType
+
   // ==========================================
-  // === Компактный режим: popover рядом со слотом ===
+  // === Компактный режим (popover)
   // ==========================================
   if (compact) {
-    const W = 340
-    const H = 620
-    const GAP = 8
+    // СНАЧАЛА объявляем winW и winH, ПОТОМ используем
     const winW = typeof window !== 'undefined' ? window.innerWidth : 1200
     const winH = typeof window !== 'undefined' ? window.innerHeight : 800
+    const W = 360
+    const H = Math.min(620, winH - 32)
+    const GAP = 8
 
     let calculatedLeft = GAP
     let calculatedTop = GAP
@@ -190,27 +188,17 @@ export default function CreateEventModal({
       calculatedLeft = anchorRect.left + anchorRect.width + GAP
       if (calculatedLeft + W > winW - GAP) {
         calculatedLeft = anchorRect.left - W - GAP
-        if (calculatedLeft < GAP) {
-          calculatedLeft = Math.max(GAP, (winW - W) / 2)
-        }
+        if (calculatedLeft < GAP) calculatedLeft = Math.max(GAP, (winW - W) / 2)
       }
       calculatedTop = anchorRect.top
-      if (calculatedTop + H > winH - GAP) {
-        calculatedTop = Math.max(GAP, winH - H - GAP)
-      }
+      if (calculatedTop + H > winH - GAP) calculatedTop = Math.max(GAP, winH - H - GAP)
       if (calculatedTop < GAP) calculatedTop = GAP
     }
-
-    const showTypeSwitcher = (canCreateQuest || canCreateSurvey) && !!onSwitchType
 
     return (
       <div
         className="fixed z-[60] animate-slide-down"
-        style={{
-          top: calculatedTop,
-          left: calculatedLeft,
-          width: W,
-        }}
+        style={{ top: calculatedTop, left: calculatedLeft, width: W }}
         onClick={(e) => e.stopPropagation()}
       >
         <form
@@ -239,39 +227,22 @@ export default function CreateEventModal({
             </button>
           </div>
 
-          {/* Переключатель типа создания */}
-          {showTypeSwitcher && (
-            <div
-              className={`grid gap-1 p-1 rounded-lg bg-slate-100 dark:bg-[#0d1117] ${
-                canCreateQuest && canCreateSurvey
-                  ? 'grid-cols-3'
-                  : 'grid-cols-2'
-              }`}
-            >
-              <button
-                type="button"
-                className="py-1.5 text-xs font-medium rounded-md bg-white dark:bg-[#161b22] text-brand-700 dark:text-brand-400 shadow-sm"
-              >
-                Событие
-              </button>
-              {canCreateQuest && (
+          {showSwitcher && (
+            <div className="flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-[#0d1117]">
+              {switcherOptions.map((opt) => (
                 <button
+                  key={opt.id}
                   type="button"
-                  onClick={() => onSwitchType!('quest')}
-                  className="py-1.5 text-xs font-medium rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
+                  onClick={() => opt.id !== 'event' && onSwitchType!(opt.id)}
+                  className={`flex-1 py-1.5 text-[11px] font-medium rounded-md transition ${
+                    opt.id === 'event'
+                      ? 'bg-white dark:bg-[#161b22] text-brand-700 dark:text-brand-400 shadow-sm'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                  }`}
                 >
-                  Квест
+                  {opt.label}
                 </button>
-              )}
-              {canCreateSurvey && (
-                <button
-                  type="button"
-                  onClick={() => onSwitchType!('survey')}
-                  className="py-1.5 text-xs font-medium rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition"
-                >
-                  Опрос
-                </button>
-              )}
+              ))}
             </div>
           )}
 
@@ -377,7 +348,7 @@ export default function CreateEventModal({
           </div>
 
           <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center">
-            Событие уйдёт на модерацию HR
+            Уйдёт на модерацию HR
           </p>
         </form>
       </div>
@@ -385,7 +356,7 @@ export default function CreateEventModal({
   }
 
   // ==========================================
-  // === Полноэкранный режим ===
+  // === Полноэкранный режим
   // ==========================================
   return (
     <div
@@ -404,11 +375,7 @@ export default function CreateEventModal({
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {hideDate
-                ? `${defaultFrom?.toLocaleDateString('ru-RU', {
-                    day: 'numeric',
-                    month: 'long',
-                    weekday: 'long',
-                  }) ?? ''} — укажите время`
+                ? 'Укажите время'
                 : canSetRewards
                 ? 'После создания событие можно сразу назначить'
                 : 'После создания событие отправится на модерацию'}
@@ -465,7 +432,7 @@ export default function CreateEventModal({
                 value={fromTimeOnly}
                 onChange={(e) => setFromTimeOnly(e.target.value)}
                 required
-                className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm focus:outline-none focus:border-brand-500"
+                className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
               />
             </div>
             <div>
@@ -477,7 +444,7 @@ export default function CreateEventModal({
                 value={toTimeOnly}
                 onChange={(e) => setToTimeOnly(e.target.value)}
                 required
-                className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm focus:outline-none focus:border-brand-500"
+                className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
               />
             </div>
           </div>
@@ -492,7 +459,7 @@ export default function CreateEventModal({
                 value={fromTime}
                 onChange={(e) => setFromTime(e.target.value)}
                 required
-                className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm focus:outline-none focus:border-brand-500"
+                className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
               />
             </div>
             <div>
@@ -504,7 +471,7 @@ export default function CreateEventModal({
                 value={toTime}
                 onChange={(e) => setToTime(e.target.value)}
                 required
-                className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm focus:outline-none focus:border-brand-500"
+                className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
               />
             </div>
           </div>
@@ -517,7 +484,7 @@ export default function CreateEventModal({
           <input
             value={eventPlace}
             onChange={(e) => setEventPlace(e.target.value)}
-            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm focus:outline-none focus:border-brand-500"
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
           />
         </div>
 
@@ -529,28 +496,23 @@ export default function CreateEventModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm resize-none focus:outline-none focus:border-brand-500"
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm resize-none"
           />
         </div>
 
         <div>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {canSetRewards ? 'Комментарий' : 'Пожелания администратору по награде'}
+            {canSetRewards ? 'Комментарий' : 'Пожелания администратору'}
           </label>
           <textarea
             value={commentToAdmin}
             onChange={(e) => setCommentToAdmin(e.target.value)}
             rows={2}
-            placeholder={
-              canSetRewards
-                ? 'Например: прошу согласовать бюджет'
-                : 'Например: прошу начислить 100 монет и 1 рейтинг каждому участнику'
-            }
-            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm resize-none focus:outline-none focus:border-brand-500"
+            className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm resize-none"
           />
         </div>
 
-        {canSetRewards ? (
+        {canSetRewards && (
           <>
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
               <input
@@ -560,41 +522,32 @@ export default function CreateEventModal({
               />
               Начислить награду участникам
             </label>
-
             {paidInCoins && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Монет
-                  </label>
+                  <label className="text-sm font-medium">Монет</label>
                   <input
                     type="number"
                     value={rewardCoins}
                     onChange={(e) => setRewardCoins(Number(e.target.value))}
                     min={1}
-                    className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
+                    className="w-full border border-slate-300 rounded-md px-3 py-2 mt-1 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Рейтинга
-                  </label>
+                  <label className="text-sm font-medium">Рейтинга</label>
                   <input
                     type="number"
                     value={rewardRating}
                     onChange={(e) => setRewardRating(Number(e.target.value))}
                     min={0}
                     step={0.5}
-                    className="w-full border border-slate-300 dark:border-[#30363d] dark:bg-[#0d1117] dark:text-white rounded-md px-3 py-2 mt-1 text-sm"
+                    className="w-full border border-slate-300 rounded-md px-3 py-2 mt-1 text-sm"
                   />
                 </div>
               </div>
             )}
           </>
-        ) : (
-          <div className="bg-slate-50 dark:bg-[#0d1117] text-xs text-slate-500 dark:text-slate-400 p-3 rounded border border-slate-200 dark:border-[#30363d]">
-            Награду назначает администратор или HR при одобрении события.
-          </div>
         )}
 
         <div className="flex justify-end gap-2 pt-2">
@@ -608,9 +561,13 @@ export default function CreateEventModal({
           <button
             type="submit"
             disabled={loading}
-            className="bg-brand-600 hover:bg-brand-700 text-white rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 transition"
+            className="bg-brand-600 hover:bg-brand-700 text-white rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
-            {loading ? 'Создание...' : canSetRewards ? 'Создать' : 'Отправить на модерацию'}
+            {loading
+              ? 'Создание...'
+              : canSetRewards
+              ? 'Создать'
+              : 'Отправить на модерацию'}
           </button>
         </div>
       </form>

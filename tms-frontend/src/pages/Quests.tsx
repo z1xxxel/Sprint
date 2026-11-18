@@ -3,43 +3,28 @@ import { useAuth } from '../store/auth'
 import { getAvailableQuests, startQuest, submitQuest } from '../api/quests'
 import { notify, getErrorMessage } from '../lib/notify'
 import type { QuestListItem } from '../types'
-import {
-  IconTarget,
-  IconCheck,
-  IconTrophy,
-  IconChart,
-  IconArrowRight,
-  IconClock,
-} from '../components/Icons'
 
 type Tab = 'available' | 'in_progress' | 'review' | 'completed' | 'rejected'
 
-const STATUS_META: Record<string, { label: string; className: string }> = {
-  IN_PROGRESS: {
-    label: 'В работе',
-    className:
-      'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30',
-  },
-  PENDING_REVIEW: {
-    label: 'На проверке',
-    className:
-      'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30',
-  },
-  COMPLETED: {
-    label: 'Выполнен',
-    className:
-      'bg-brand-50 text-brand-700 border-brand-200 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/30',
-  },
-  REJECTED: {
-    label: 'Отклонён',
-    className:
-      'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30',
-  },
-  CANCELLED: {
-    label: 'Отменён',
-    className:
-      'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/30',
-  },
+const STATUS_BADGES: Record<string, string> = {
+  IN_PROGRESS:
+    'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400',
+  PENDING_REVIEW:
+    'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400',
+  COMPLETED:
+    'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+  REJECTED:
+    'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400',
+  CANCELLED:
+    'bg-slate-100 dark:bg-slate-500/10 text-slate-600 dark:text-slate-400',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  IN_PROGRESS: 'В работе',
+  PENDING_REVIEW: 'На проверке',
+  COMPLETED: 'Выполнен',
+  REJECTED: 'Отклонён',
+  CANCELLED: 'Отменён',
 }
 
 function formatDeadline(iso: string) {
@@ -113,7 +98,9 @@ export default function Quests() {
       await startQuest(questId, user.id)
       setQuests((prev) =>
         prev.map((q) =>
-          q.questId === questId ? { ...q, myStatus: 'IN_PROGRESS', nextAvailableAt: null } : q
+          q.questId === questId
+            ? { ...q, myStatus: 'IN_PROGRESS', nextAvailableAt: null }
+            : q
         )
       )
       notify.success('Квест взят в работу')
@@ -153,97 +140,102 @@ export default function Quests() {
 
   return (
     <div className="space-y-6">
+      {/* HERO */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-500 via-brand-600 to-accent-600 text-white p-6 sm:p-8">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
         <div className="relative">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <IconTarget size={20} className="text-white/80" />
-                <span className="text-xs text-white/80 uppercase tracking-wider">
-                  Квесты
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Задания компании</h1>
-              <p className="text-sm text-white/80 mt-1">
-                Выполняйте квесты и получайте монеты и рейтинг
-              </p>
-            </div>
+          <div className="text-xs text-white/80 uppercase tracking-wider font-medium mb-1.5">
+            Квесты компании
           </div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Задания и челленджи</h1>
+          <p className="text-sm text-white/85 mt-1.5 max-w-lg">
+            Выполняйте квесты, получайте монеты и рейтинг, прокачивайте свой профиль
+          </p>
 
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <div>
-              <div className="text-xs text-white/70 uppercase tracking-wider">
+          <div className="grid grid-cols-3 gap-3 sm:gap-5 mt-7">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <div className="text-[11px] text-white/70 uppercase tracking-wider">
                 Выполнено
               </div>
-              <div className="text-2xl sm:text-3xl font-bold mt-1">
+              <div className="text-2xl sm:text-3xl font-bold mt-0.5">
                 {stats.completed}
               </div>
             </div>
-            <div>
-              <div className="text-xs text-white/70 uppercase tracking-wider">
-                В работе
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <div className="text-[11px] text-white/70 uppercase tracking-wider">
+                Активных
               </div>
-              <div className="text-2xl sm:text-3xl font-bold mt-1">
+              <div className="text-2xl sm:text-3xl font-bold mt-0.5">
                 {stats.active}
               </div>
             </div>
-            <div>
-              <div className="text-xs text-white/70 uppercase tracking-wider">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <div className="text-[11px] text-white/70 uppercase tracking-wider">
                 Заработано
               </div>
-              <div className="text-2xl sm:text-3xl font-bold mt-1">
+              <div className="text-2xl sm:text-3xl font-bold mt-0.5">
                 {stats.earned}
-                <span className="text-base font-medium text-white/70"> монет</span>
+                <span className="text-sm font-medium text-white/70 ml-1">монет</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {loading && <div className="text-slate-500">Загрузка...</div>}
-      {error && <div className="text-red-600">{error}</div>}
+      {loading && (
+        <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-8 text-center text-slate-500">
+          Загрузка квестов...
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-500/30 p-4 text-sm">
+          {error}
+        </div>
+      )}
 
       {!loading && !error && quests.length > 0 && (
-        <div className="border-b border-slate-200 dark:border-[#30363d] overflow-x-auto">
-          <div className="flex gap-1 -mb-px">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                disabled={t.count === 0}
-                className={`px-4 py-2.5 text-sm font-medium transition border-b-2 whitespace-nowrap flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                  tab === t.id
-                    ? 'border-brand-600 text-brand-700 dark:text-brand-400'
-                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                {t.label}
-                {t.count > 0 && (
-                  <span
-                    className={`text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
-                      tab === t.id
-                        ? 'bg-brand-100 dark:bg-brand-500/20 text-brand-700 dark:text-brand-400'
-                        : 'bg-slate-100 dark:bg-[#21262d] text-slate-500 dark:text-slate-400'
-                    }`}
-                  >
-                    {t.count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+        <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-1.5 flex gap-1 overflow-x-auto">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              disabled={t.count === 0 && t.id !== 'available'}
+              className={`flex items-center gap-2 px-3.5 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                tab === t.id
+                  ? 'bg-brand-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#21262d]'
+              }`}
+            >
+              <span>{t.label}</span>
+              {t.count > 0 && (
+                <span
+                  className={`text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
+                    tab === t.id
+                      ? 'bg-white/25 text-white'
+                      : 'bg-slate-100 dark:bg-[#21262d] text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {t.count}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
       )}
 
       {!loading && !error && currentList.length === 0 && (
-        <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-8 sm:p-12 text-center">
-          <div className="text-slate-400 dark:text-slate-500 text-sm">
+        <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-10 sm:p-14 text-center">
+          <div className="text-slate-600 dark:text-slate-300 text-sm font-medium">
             {tab === 'available' && 'Нет доступных квестов'}
-            {tab === 'in_progress' && 'У вас нет квестов в работе'}
+            {tab === 'in_progress' && 'Нет квестов в работе'}
             {tab === 'review' && 'Нет квестов на проверке'}
             {tab === 'completed' && 'Вы пока не выполнили ни одного квеста'}
             {tab === 'rejected' && 'Отклонённых квестов нет'}
+          </div>
+          <div className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs mx-auto">
+            {tab === 'available' && 'Как только появятся новые задания — они отобразятся здесь'}
+            {tab === 'in_progress' && 'Возьмите квест из раздела «Доступные»'}
+            {tab === 'completed' && 'Начните выполнять квесты, чтобы получать награды'}
           </div>
         </div>
       )}
@@ -263,6 +255,9 @@ export default function Quests() {
   )
 }
 
+// ==========================================
+// === Карточка квеста
+// ==========================================
 function QuestCard({
   quest,
   processing,
@@ -275,77 +270,110 @@ function QuestCard({
   onSubmit: () => void
 }) {
   const status = quest.myStatus
-  const meta = status ? STATUS_META[status] : null
-
-  const isOverdue =
-    quest.deadline && new Date(quest.deadline).getTime() < Date.now()
+  const isOverdue = quest.deadline && new Date(quest.deadline).getTime() < Date.now()
   const days = quest.deadline ? daysLeft(quest.deadline) : null
-  const hasPenalty =
-    quest.isMandatory && (quest.penaltyCoins || quest.penaltyRating)
-  const isMandatory = quest.isMandatory
+  const isUrgent = days !== null && days >= 0 && days <= 2 && !isOverdue
 
   return (
     <div
-      className={`bg-white dark:bg-[#161b22] rounded-xl border p-5 flex flex-col gap-3 ${
-        isMandatory
+      className={`bg-white dark:bg-[#161b22] rounded-xl border p-5 flex flex-col ${
+        quest.isMandatory
           ? 'border-red-200 dark:border-red-500/30'
           : 'border-slate-200 dark:border-[#30363d]'
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+      {/* Заголовок и статус */}
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap mb-1">
+            {quest.isMandatory && (
+              <span className="text-[10px] bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                Обязательный
+              </span>
+            )}
+            {quest.isRepeatable && (
+              <span className="text-[10px] bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded-full font-semibold">
+                Повторяемый
+              </span>
+            )}
+          </div>
           <h3 className="font-semibold text-slate-900 dark:text-white leading-snug">
             {quest.title}
           </h3>
-          {isMandatory && (
-            <span className="text-[10px] bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-500/30 uppercase tracking-wider font-medium">
-              Принудит.
-            </span>
-          )}
-          {quest.isRepeatable && (
-            <span className="text-[10px] bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-500/30 uppercase tracking-wider font-medium flex items-center gap-1">
-              <IconClock size={10} /> Повторяемый
-            </span>
-          )}
         </div>
-        {meta && (
+        {status && (
           <span
-            className={`shrink-0 text-xs px-2 py-0.5 rounded border font-medium ${meta.className}`}
+            className={`shrink-0 text-[10px] px-2 py-1 rounded-full font-semibold ${
+              STATUS_BADGES[status]
+            }`}
           >
-            {meta.label}
+            {STATUS_LABELS[status]}
           </span>
         )}
       </div>
 
       {quest.description && (
-        <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3">
+        <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3 mb-3">
           {quest.description}
         </p>
       )}
 
       {quest.deadline && (
         <div
-          className={`text-xs flex items-center gap-1.5 flex-wrap ${
+          className={`text-xs mb-3 ${
             isOverdue
-              ? 'text-red-600 dark:text-red-400 font-medium'
+              ? 'text-red-600 dark:text-red-400 font-semibold'
+              : isUrgent
+              ? 'text-amber-600 dark:text-amber-400 font-medium'
               : 'text-slate-500 dark:text-slate-400'
           }`}
         >
-          <IconClock size={12} />
-          Дедлайн: {formatDeadline(quest.deadline)}
           {isOverdue
-            ? ' (просрочен)'
-            : days !== null && days > 0 && (
-                <span className="text-slate-400 dark:text-slate-500">
-                  · осталось {days} {days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'}
-                </span>
-              )}
+            ? 'Просрочен · '
+            : days !== null && days > 0
+            ? `${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'} до конца · `
+            : 'Заканчивается сегодня · '}
+          {formatDeadline(quest.deadline)}
         </div>
       )}
 
+      {/* Награда */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        <div className="bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 px-3 py-1.5 rounded-lg text-sm font-semibold">
+          +{quest.rewardCoins.toFixed(0)}{' '}
+          <span className="text-xs font-medium">монет</span>
+        </div>
+        {quest.rewardRating && quest.rewardRating > 0 && (
+          <div className="bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 px-3 py-1.5 rounded-lg text-xs font-semibold">
+            +{quest.rewardRating.toFixed(1)} рейтинга
+          </div>
+        )}
+      </div>
+
+      {/* Штраф */}
+      {quest.isMandatory &&
+        (quest.penaltyCoins || quest.penaltyRating) &&
+        status !== 'COMPLETED' &&
+        status !== 'CANCELLED' && (
+          <div className="bg-red-50 dark:bg-red-500/10 rounded-lg px-3 py-2 mb-3">
+            <div className="text-[11px] font-semibold text-red-700 dark:text-red-400 mb-0.5 uppercase tracking-wider">
+              При провале
+            </div>
+            <div className="text-xs text-red-600 dark:text-red-400 flex flex-wrap gap-2">
+              {quest.penaltyCoins && quest.penaltyCoins > 0 && (
+                <span>−{quest.penaltyCoins} монет</span>
+              )}
+              {quest.penaltyRating && quest.penaltyRating > 0 && (
+                <span>−{quest.penaltyRating} рейтинга</span>
+              )}
+            </div>
+          </div>
+        )}
+
+      {/* Причина отклонения */}
       {status === 'REJECTED' && quest.adminComment && (
-        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-md px-3 py-2">
-          <div className="text-xs font-medium text-red-700 dark:text-red-400 mb-0.5">
+        <div className="bg-red-50 dark:bg-red-500/10 rounded-lg px-3 py-2 mb-3">
+          <div className="text-[11px] font-semibold text-red-700 dark:text-red-400 mb-0.5">
             Причина отклонения
           </div>
           <div className="text-xs text-red-600 dark:text-red-400">
@@ -354,101 +382,47 @@ function QuestCard({
         </div>
       )}
 
-      {hasPenalty && status !== 'COMPLETED' && status !== 'CANCELLED' && (
-        <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-md px-3 py-2">
-          <div className="text-xs font-medium text-red-700 dark:text-red-400 mb-0.5">
-            Штраф при невыполнении
-          </div>
-          <div className="text-xs text-red-600 dark:text-red-400 flex flex-wrap gap-2">
-            {quest.penaltyCoins && quest.penaltyCoins > 0 && (
-              <span>−{quest.penaltyCoins} монет</span>
-            )}
-            {quest.penaltyRating && quest.penaltyRating > 0 && (
-              <span>−{quest.penaltyRating} рейтинга</span>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="flex items-center gap-2 flex-wrap pt-1">
-        <div className="inline-flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 px-2.5 py-1 rounded-md text-sm font-semibold">
-          <IconTrophy size={14} />+{quest.rewardCoins.toFixed(0)}
-        </div>
-        <span className="text-xs text-slate-500 dark:text-slate-400">монет</span>
-        {quest.rewardRating && quest.rewardRating > 0 && (
-          <span className="inline-flex items-center gap-1 bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 border border-brand-200 dark:border-brand-500/30 px-2 py-0.5 rounded text-xs font-medium">
-            +{quest.rewardRating.toFixed(1)} рейтинга
-          </span>
-        )}
-      </div>
-
-      <div className="mt-auto pt-2">
+      {/* Кнопка действия */}
+      <div className="mt-auto pt-3 border-t border-slate-100 dark:border-[#30363d]">
         {status === null && (
           <button
             onClick={onStart}
             disabled={processing}
-            className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50 transition"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-50 transition"
           >
-            {processing ? '...' : 'Взять квест'}
+            {processing ? 'Загрузка...' : 'Взять квест'}
           </button>
         )}
 
         {(status === 'IN_PROGRESS' || status === 'REJECTED') && (
-          <div className="space-y-2">
-            {status === 'IN_PROGRESS' && (
-              <div className="text-xs text-slate-500 dark:text-slate-400 text-center">
-                Выполните задание и отправьте на проверку
-              </div>
-            )}
-            <button
-              onClick={onSubmit}
-              disabled={processing}
-              className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-md py-2 text-sm font-medium disabled:opacity-50 transition inline-flex items-center justify-center gap-1"
-            >
-              {processing ? (
-                '...'
-              ) : (
-                <>
-                  {status === 'REJECTED' ? 'Сдать повторно' : 'Сдать на проверку'}
-                  <IconArrowRight size={14} />
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={onSubmit}
+            disabled={processing}
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-lg py-2.5 text-sm font-semibold disabled:opacity-50 transition"
+          >
+            {processing
+              ? 'Загрузка...'
+              : status === 'REJECTED'
+              ? 'Сдать повторно'
+              : 'Отправить на проверку'}
+          </button>
         )}
 
         {status === 'PENDING_REVIEW' && (
-          <div className="flex items-center justify-center gap-1.5 text-sm text-amber-600 dark:text-amber-400 py-2 bg-amber-50 dark:bg-amber-500/10 rounded-md border border-amber-200 dark:border-amber-500/30">
-            <IconChart size={14} />
-            Ожидает проверки администратором
+          <div className="text-sm text-amber-600 dark:text-amber-400 py-2.5 bg-amber-50 dark:bg-amber-500/10 rounded-lg font-medium text-center">
+            Ожидает проверки
           </div>
         )}
 
         {status === 'COMPLETED' && (
-          <>
-            {quest.nextAvailableAt ? (
-              <div className="flex flex-col items-center justify-center py-2 bg-slate-50 dark:bg-[#0d1117] rounded-md border border-slate-200 dark:border-[#30363d]">
-                <div className="flex items-center gap-1.5 text-sm text-brand-700 dark:text-brand-400 font-medium">
-                  <IconCheck size={14} /> Выполнен
-                </div>
-                <div className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
-                  <IconClock size={12} />
-                  Повторно доступен: {new Date(quest.nextAvailableAt).toLocaleString('ru-RU', {
-                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-1.5 text-sm text-brand-700 dark:text-brand-400 py-2 bg-brand-50 dark:bg-brand-500/10 rounded-md border border-brand-200 dark:border-brand-500/30">
-                <IconCheck size={14} /> Квест выполнен
-              </div>
-            )}
-          </>
+          <div className="text-sm text-emerald-600 dark:text-emerald-400 py-2.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg font-semibold text-center">
+            Выполнено · награда получена
+          </div>
         )}
 
         {status === 'CANCELLED' && (
-          <div className="flex items-center justify-center text-sm text-slate-500 dark:text-slate-400 py-2 bg-slate-50 dark:bg-[#0d1117] rounded-md border border-slate-200 dark:border-[#30363d]">
-            Квест отменён администратором
+          <div className="text-sm text-slate-500 dark:text-slate-400 py-2.5 bg-slate-50 dark:bg-[#0d1117] rounded-lg font-medium text-center">
+            Квест отменён
           </div>
         )}
       </div>

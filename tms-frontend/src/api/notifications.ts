@@ -19,3 +19,6 @@ export const getUnreadNotificationsCount = (userId: number) =>
 
 export const markAllNotificationsRead = (userId: number) =>
   api.put(`/notifications/user/${userId}/read-all`).then((r) => r.data)
+
+export const markNotificationRead = (notificationId: number) =>
+  api.put(`/notifications/${notificationId}/read`).then((r) => r.data)

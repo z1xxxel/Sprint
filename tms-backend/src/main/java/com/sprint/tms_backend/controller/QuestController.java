@@ -1,7 +1,6 @@
 package com.sprint.tms_backend.controller;
 
 import com.sprint.tms_backend.DTO.*;
-import com.sprint.tms_backend.model.Quest;
 import com.sprint.tms_backend.service.QuestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,28 +18,67 @@ public class QuestController {
 
     private final QuestService questService;
 
+    // ==========================================
+    // === СОЗДАНИЕ / ОБНОВЛЕНИЕ (String)
+    // ==========================================
+
     @PostMapping("/admin/create")
-    public ResponseEntity<Quest> createQuestWithAudience(
+    public ResponseEntity<String> createQuestWithAudience(
             @RequestBody CreateQuestWithAudienceRequest req) {
-        return new ResponseEntity<>(
-                questService.createQuestWithAudience(req), HttpStatus.CREATED);
+        questService.createQuestWithAudience(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Квест создан");
     }
 
     @PutMapping("/admin/{id}")
-    public ResponseEntity<Quest> updateQuest(
+    public ResponseEntity<String> updateQuest(
             @PathVariable Long id,
             @RequestBody UpdateQuestRequest req) {
-        return ResponseEntity.ok(questService.updateQuest(id, req));
+        questService.updateQuest(id, req);
+        return ResponseEntity.ok("Квест обновлён");
     }
 
     @PutMapping("/admin/{id}/extend-deadline")
-    public ResponseEntity<Quest> extendDeadline(
+    public ResponseEntity<String> extendDeadline(
             @PathVariable Long id,
             @RequestParam Long actorId,
             @RequestParam String newDeadline) {
         LocalDateTime dt = LocalDateTime.parse(newDeadline);
-        return ResponseEntity.ok(questService.extendDeadline(id, actorId, dt));
+        questService.extendDeadline(id, actorId, dt);
+        return ResponseEntity.ok("Дедлайн продлён");
     }
+
+    @PostMapping
+    public ResponseEntity<String> createQuest(@RequestBody CreateQuestRequest request) {
+        questService.createQuest(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Квест создан");
+    }
+
+    // ==========================================
+    // === ИНДИВИДУАЛЬНЫЕ ДЕЙСТВИЯ С ПРОХОЖДЕНИЕМ
+    // ==========================================
+
+    @PutMapping("/admin/user-quests/{userQuestId}/extend-deadline")
+    public ResponseEntity<String> extendUserQuestDeadline(
+            @PathVariable Long userQuestId,
+            @RequestParam Long actorId,
+            @RequestParam String newDeadline) {
+        questService.extendUserQuestDeadline(
+                userQuestId, actorId, LocalDateTime.parse(newDeadline));
+        return ResponseEntity.ok("Дедлайн прохождения продлён");
+    }
+
+    @PutMapping("/admin/user-quests/{userQuestId}/force-reject")
+    public ResponseEntity<String> forceRejectUserQuest(
+            @PathVariable Long userQuestId,
+            @RequestBody ForceRejectUserQuestRequest req) {
+        questService.forceRejectUserQuest(
+                userQuestId, req.actorId(), req.applyPenalty(), req.reason());
+        return ResponseEntity.ok("Квест принудительно завершён");
+    }
+
+    // ==========================================
+    // === ПРОЧЕЕ (без изменений)
+    // ==========================================
 
     @GetMapping("/admin/{id}/participants")
     public ResponseEntity<List<AdminQuestParticipantDTO>> getParticipants(
@@ -54,11 +92,6 @@ public class QuestController {
             @PathVariable Long id,
             @RequestBody ApplyQuestPenaltyRequest req) {
         return ResponseEntity.ok(questService.applyQuestPenalty(id, req));
-    }
-
-    @PostMapping
-    public ResponseEntity<Quest> createQuest(@RequestBody CreateQuestRequest request) {
-        return new ResponseEntity<>(questService.createQuest(request), HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{questId}")

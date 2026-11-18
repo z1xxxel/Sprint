@@ -20,15 +20,25 @@ export type Permission =
   | 'NEWS_MANAGE'
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
-  EMPLOYEE: ['EVENT_CREATE', 'COIN_TRANSFER', 'TICKET_CREATE', 'CATALOG_VIEW'],
+  EMPLOYEE: [
+    'EVENT_CREATE',
+    'COIN_TRANSFER',
+    'TICKET_CREATE',
+    'CATALOG_VIEW',
+    'QUEST_PARTICIPATE',
+  ],
   ORGANIZER: [
     'EVENT_CREATE',
     'EVENT_EDIT_ANY',
     'COIN_TRANSFER',
     'CATALOG_VIEW',
+    'QUEST_PARTICIPATE',
   ],
   MANAGER: [
     'EVENT_CREATE',
+    'EVENT_EDIT_ANY',
+    'EVENT_APPROVE',
+    'EVENT_VIEW_ANY',
     'COIN_TRANSFER',
     'COIN_GRANT_SUBORDINATE',
     'CATALOG_VIEW',
@@ -36,6 +46,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'ORDER_MANAGE',
     'QUEST_MANAGE',
     'QUEST_PARTICIPATE',
+    'TICKET_CREATE',
+    'NEWS_MANAGE',
   ],
   SUPPORT: [
     'TICKET_MANAGE',
@@ -46,16 +58,19 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'QUEST_PARTICIPATE',
   ],
   HR: [
+    'EVENT_CREATE',
     'EVENT_APPROVE',
     'EVENT_EDIT_ANY',
     'EVENT_VIEW_ANY',
     'COIN_TRANSFER',
+    'COIN_GRANT_SUBORDINATE',
     'USER_MANAGE',
     'ORDER_MANAGE',
     'CATALOG_MANAGE',
     'CATALOG_VIEW',
     'QUEST_MANAGE',
     'QUEST_PARTICIPATE',
+    'TICKET_MANAGE',
     'TICKET_CREATE',
     'NEWS_MANAGE',
   ],

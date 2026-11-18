@@ -9,6 +9,7 @@ public record AdminQuestLogDTO(
         Long userQuestId,
         Long questId,
         String questTitle,
+        String questDescription,          // ← NEW
         Long userId,
         String userName,
         QuestProgressStatus status,
@@ -16,6 +17,8 @@ public record AdminQuestLogDTO(
         Double rewardRating,
         BigDecimal penaltyCoins,
         Double penaltyRating,
+        LocalDateTime deadline,
+        LocalDateTime deadlineOverride,
         LocalDateTime startedAt,
         LocalDateTime submittedAt,
         LocalDateTime completedAt,
