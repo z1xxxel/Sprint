@@ -8,7 +8,7 @@ import { notify } from '../lib/notify'
 import {
   IconArrowLeft, IconGift, IconCalendar, IconTrophy, IconBag,
   IconStar, IconUser, IconArrowDown, IconTarget, IconX,
-  IconCheck, IconSupport,
+  IconSupport,
 } from '../components/Icons'
 import type { CoinTx } from '../types'
 

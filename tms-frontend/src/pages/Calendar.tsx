@@ -35,6 +35,7 @@ import {
   IconClock,
   IconChart,
   IconEdit,
+  IconCheck,
 } from '../components/Icons'
 import type { EventDto, QuestListItem } from '../types'
 

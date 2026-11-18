@@ -185,7 +185,6 @@ export default function ManageOrdersTab() {
             <OrderCard
               key={order.id}
               order={order}
-              processing={processing === order.id}
               actions={
                 <>
                   <button
@@ -260,13 +259,11 @@ export default function ManageOrdersTab() {
 
 function OrderCard({
   order,
-  processing,
   statusBadge,
   statusColor,
   actions,
 }: {
   order: OrderResponse
-  processing?: boolean
   statusBadge?: string
   statusColor?: string
   actions?: React.ReactNode

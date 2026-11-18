@@ -112,21 +112,21 @@ export default function NotificationBell() {
     if (isSupport) {
       tasks.push(
         getPendingTickets()
-          .then((t) => !cancelledRef.current && setPendingTickets(t.length))
+          .then((t) => { if (!cancelledRef.current) setPendingTickets(t.length) })
           .catch(() => {})
       )
     }
     if (isManager) {
       tasks.push(
         getPendingOrders(me.id)
-          .then((o) => !cancelledRef.current && setPendingOrders(o.length))
+          .then((o) => { if (!cancelledRef.current) setPendingOrders(o.length) })
           .catch(() => {})
       )
     }
     if (isQuestManager) {
       tasks.push(
         getQuestsForReview(me.id)
-          .then((q) => !cancelledRef.current && setPendingQuests(q.length))
+          .then((q) => { if (!cancelledRef.current) setPendingQuests(q.length) })
           .catch(() => {})
       )
     }

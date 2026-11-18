@@ -21,7 +21,6 @@ import {
   IconCheck,
   IconX,
   IconClock,
-  IconTarget,
   IconChevronDown,
 } from '../components/Icons'
 import type { EventDto } from '../types'

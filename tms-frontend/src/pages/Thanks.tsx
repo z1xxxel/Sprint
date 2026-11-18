@@ -11,7 +11,6 @@ import {
   type ThanksFeed,
   type UserThanks,
   type Page,
-  type TopThanked,
 } from '../api/thanks'
 import Avatar from '../components/Avatar'
 

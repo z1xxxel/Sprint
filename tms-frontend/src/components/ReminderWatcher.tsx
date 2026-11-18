@@ -51,5 +51,5 @@ function showNoteToast(note: CalendarNote) {
     note.text && note.text.trim().length > 0
       ? note.text
       : `В ${time} — «${note.title}»`
-  notify.info(`⏰ ${note.title} · ${time}\n${message}`, 'Напоминание', undefined)
+  notify.info(`⏰ ${note.title} · ${time}\n${message}`, 'Напоминание')
 }

@@ -73,13 +73,10 @@ export default function Seasons() {
   const top3 = leaderboard.slice(0, 3)
   const inTop3 = myPlace ? top3.some((e) => e.userId === user.id) : false
   const thirdPlace = leaderboard[2]
-  const firstPlace = leaderboard[0]
   const pointsToTop3 =
     !inTop3 && thirdPlace && myPlace
       ? Math.max(0, thirdPlace.currentRating - myPlace.currentRating)
       : 0
-  const pointsToFirst =
-    !myPlace ? 0 : firstPlace ? Math.max(0, firstPlace.currentRating - myPlace.currentRating) : 0
 
   const myDeptWonLastSeason = (data.previousDepartmentResults ?? []).some(
     (d) => d.place === 1 && d.departmentName === data.myDepartmentName
@@ -95,7 +92,6 @@ export default function Seasons() {
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative p-6 sm:p-8">
-          {/* Верхняя строка: название + дни */}
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
               <div className="text-sm text-white/80 uppercase tracking-wider mb-1">
@@ -117,7 +113,6 @@ export default function Seasons() {
             )}
           </div>
 
-          {/* Моё положение */}
           {myPlace ? (
             <div className="mt-6 space-y-4">
               <div className="grid grid-cols-3 gap-4">
@@ -146,7 +141,6 @@ export default function Seasons() {
                 </div>
               </div>
 
-              {/* Прогресс до призовой зоны */}
               {inTop3 ? (
                 <div className="bg-emerald-400/20 border border-emerald-300/40 rounded-lg px-4 py-2.5 text-sm font-medium">
                   Вы в призовой зоне. Если сезон закончится сейчас, получите{' '}
@@ -225,7 +219,6 @@ export default function Seasons() {
           prevResults={data.previousSeasonResults}
           myPlace={myPlace}
           isEmpty={isEmpty}
-          pointsToFirst={pointsToFirst}
           pointsToTop3={pointsToTop3}
           inTop3={inTop3}
         />
@@ -254,7 +247,6 @@ function PersonalTab({
   prevResults,
   myPlace,
   isEmpty,
-  pointsToFirst,
   pointsToTop3,
   inTop3,
 }: {
@@ -263,7 +255,6 @@ function PersonalTab({
   prevResults: SeasonResult[]
   myPlace: LeaderboardEntry | undefined
   isEmpty: boolean
-  pointsToFirst: number
   pointsToTop3: number
   inTop3: boolean
 }) {
@@ -271,7 +262,6 @@ function PersonalTab({
   const rest = leaderboard.slice(3)
   const topRating = top3[0]?.currentRating ?? 1
 
-  // Пустой сезон
   if (isEmpty) {
     return (
       <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-10 text-center">
@@ -288,7 +278,6 @@ function PersonalTab({
 
   return (
     <div className="space-y-6">
-      {/* Подиум */}
       {top3.length > 0 && (
         <div className="bg-gradient-to-b from-slate-50 to-white dark:from-[#0d1117] dark:to-[#161b22] rounded-2xl border border-slate-200 dark:border-[#30363d] p-6">
           <div className="text-center mb-6">
@@ -331,7 +320,6 @@ function PersonalTab({
             {!top3[2] && <div />}
           </div>
 
-          {/* Подсказка для меня */}
           {myPlace && !inTop3 && pointsToTop3 > 0 && (
             <div className="mt-6 pt-5 border-t border-slate-200 dark:border-[#30363d] text-center text-sm text-slate-600 dark:text-slate-300">
               Вы на <strong>{myPlace.place} месте</strong>. До призовой зоны не хватает{' '}
@@ -349,7 +337,6 @@ function PersonalTab({
         </div>
       )}
 
-      {/* Все участники */}
       {rest.length > 0 && (
         <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] overflow-hidden">
           <div className="px-5 py-3 border-b border-slate-200 dark:border-[#30363d] flex items-center justify-between">
@@ -411,7 +398,6 @@ function PersonalTab({
         </div>
       )}
 
-      {/* Итоги прошлого сезона */}
       {prevResults.length > 0 && (
         <div>
           <div className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
@@ -471,7 +457,6 @@ function PodiumCard({
         <span className="text-[10px] uppercase tracking-wider opacity-80 mt-0.5">место</span>
       </div>
 
-      {/* Приз под пьедесталом */}
       <div className="w-full bg-slate-100 dark:bg-[#21262d] rounded-b-lg py-1.5 text-center">
         <div className="text-xs font-semibold text-amber-600 dark:text-amber-400">
           +{reward.toLocaleString('ru-RU')} монет
@@ -545,7 +530,6 @@ function DepartmentTab({
       ? Math.max(0, thirdInDept.currentRating - myEntry.currentRating)
       : 0
 
-  // Мой отдел без участников
   if (!myLeaderboard.length) {
     return (
       <div className="space-y-4">
@@ -569,14 +553,12 @@ function DepartmentTab({
 
   return (
     <div className="space-y-6">
-      {/* Hero отдела */}
       <DepartmentHero
         myDept={myDept}
         myPlace={myPlace}
         wonLastSeason={myDeptWonLastSeason}
       />
 
-      {/* Мой прогресс в отделе */}
       {myEntry && !inDeptTop3 && pointsToDeptTop3 > 0 && (
         <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] p-4">
           <div className="text-sm text-slate-700 dark:text-slate-300 mb-2">
@@ -607,13 +589,11 @@ function DepartmentTab({
         </div>
       )}
 
-      {/* Сотрудники отдела */}
       <div>
         <div className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
           Сотрудники отдела
         </div>
 
-        {/* Топ-3 отдела */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
           {myLeaderboard.slice(0, 3).map((e: LeaderboardEntry, i: number) => {
             const isMe = e.userId === currentUserId
@@ -653,7 +633,6 @@ function DepartmentTab({
           })}
         </div>
 
-        {/* Остальные */}
         {myLeaderboard.length > 3 && (
           <div className="bg-white dark:bg-[#161b22] rounded-xl border border-slate-200 dark:border-[#30363d] divide-y divide-slate-100 dark:divide-[#30363d]">
             {myLeaderboard.slice(3).map((e: LeaderboardEntry) => {
@@ -688,10 +667,8 @@ function DepartmentTab({
         )}
       </div>
 
-      {/* Награды отдела */}
       <DepartmentRewards isWinner={isMyDeptWinner} />
 
-      {/* Итоги прошлого сезона */}
       {prevDepts.length > 0 && (
         <div>
           <div className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import {
-  IconArrowLeft, IconGift, IconTrophy, IconBag, IconTarget,
-  IconX, IconCheck, IconChart, IconSupport, IconStar,
+  IconArrowLeft, IconGift,
+  IconX, IconCheck, IconChart, IconSupport,
 } from '../components/Icons'
 
 export default function EconomyRules() {

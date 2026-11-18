@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import {
   AreaChart,
   Area,
-  XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
@@ -28,7 +27,7 @@ import {
   IconArrowUp,
   IconArrowDown,
 } from '../components/Icons'
-import type { AchievementProfileDTO } from '../types'
+import type { AchievementProfileDTO, CoinTx } from '../types'
 
 function getLevelInfo(rating: number) {
   const levels = [
