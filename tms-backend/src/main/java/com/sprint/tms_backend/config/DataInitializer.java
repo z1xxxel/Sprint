@@ -20,9 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    // ==========================================
-    // ============ РЕПОЗИТОРИИ =================
-    // ==========================================
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final CategoryRepository categoryRepository;
@@ -73,9 +70,6 @@ public class DataInitializer implements CommandLineRunner {
     @PersistenceContext
     private EntityManager em;
 
-    // ==========================================
-    // ============ ТОЧКА ВХОДА =================
-    // ==========================================
     @Override
     @Transactional
     public void run(String... args) {
@@ -115,7 +109,7 @@ public class DataInitializer implements CommandLineRunner {
                 UserRole.MANAGER, 4200.00, 1.0, 60.0, frontend, null);
 
         User empBack = createUser("Петр Кодеров", "emp_back@tms.local", "123",
-                UserRole.EMPLOYEE, 8600.00, 0.0, 1600.0, qa, null);
+                UserRole.EMPLOYEE, 8600.00, 0.0, 1600.0, backend, null);
 
         User empFront = createUser("Мария Верстальщикова", "emp_front@tms.local", "123",
                 UserRole.EMPLOYEE, 3027.00, 0.0, 60.0, frontend, null);
@@ -133,7 +127,7 @@ public class DataInitializer implements CommandLineRunner {
                 UserRole.ORGANIZER, 2200.00, 0.0, 40.0, null, null);
 
         // ==================================================
-        // 3. КАТЕГОРИИ И ТОВАРЫ
+        // 3. КАТЕГОРИИ И ТОВАРЫ (с картинками из базы)
         // ==================================================
         Category textiles    = createCategory("Текстиль", "Одежда с корпоративной символикой", 1,
                 "/uploads/b039090b-3422-47ad-885f-3cc2d835512e.png");
@@ -283,7 +277,7 @@ public class DataInitializer implements CommandLineRunner {
         createWriteOff(pin, 5, "GIFT", hr, empBack, "Подарок на день рождения");
 
         // ==================================================
-        // 5. КВЕСТЫ + ПРОХОЖДЕНИЯ
+        // 5. КВЕСТЫ
         // ==================================================
         Quest q1 = createQuest("Прочитать книгу по программированию",
                 "Прочитать книгу по программированию и оставить краткий отзыв.",
@@ -374,27 +368,27 @@ public class DataInitializer implements CommandLineRunner {
         awardEvent(e3, 50.00, 2.0, List.of(empBack, empSales));
 
         // ==================================================
-        // 7. НОВОСТИ + ОЦЕНКИ
+        // 7. НОВОСТИ (с обложками из базы)
         // ==================================================
         News n1 = createNews("Запуск платформы ПУЛЬС!",
                 "Ура! Мы запустили нашу платформу вовлечённости ПУЛЬС. " +
                         "Теперь вы можете получать монеты за активность, благодарить коллег " +
                         "и тратить заработанное в магазине.",
-                true, hr, null, 30);
+                true, hr, "/uploads/72d0bc5d-673a-4d09-b6ef-6493c9b73777.jpg", 30);
         News n2 = createNews("Итоги квартала",
                 "Мы отлично поработали в этом квартале! Ключевые результаты — в новой презентации на портале.",
                 false, admin, null, 14);
         News n3 = createNews("Новогодний корпоратив",
                 "Встречаемся 25 декабря в 18:00 в ресторане «Прага». Будет весело!\n" +
                         "Дресс-код — вечерний.",
-                false, hr, null, 30);
+                false, hr, "/uploads/754b23e0-4552-41f0-b42d-eef610fead33.jpg", 30);
         News n4 = createNews("Онбординг нового сотрудника",
                 "Знакомьтесь: к нашей команде присоединился новый разработчик.\n" +
                         "Не забудьте поздравить и помочь с адаптацией.",
                 false, hr, null, 30);
         News n5 = createNews("Важное объявление",
                 "Завтра офис закрыт на санитарную обработку. Работаем из дома.",
-                false, admin, null, 2);
+                false, admin, "/uploads/a657c59f-5857-4f60-ab05-f200783a9f43.jpg", 2);
 
         createNewsRating(n1, empBack, 5);
         createNewsRating(n1, empFront, 4);
@@ -531,11 +525,9 @@ public class DataInitializer implements CommandLineRunner {
         submitSurveyResponse(s1, sq1, sq1.getOptions().get(4), empBack);
         submitSurveyResponse(s1, sq2, sq2.getOptions().get(3), empBack);
         submitSurveyResponse(s1, sq3, sq3.getOptions().get(0), empBack);
-
         submitSurveyResponse(s1, sq1, sq1.getOptions().get(3), empFront);
         submitSurveyResponse(s1, sq2, sq2.getOptions().get(4), empFront);
         submitSurveyResponse(s1, sq3, sq3.getOptions().get(1), empFront);
-
         submitSurveyResponse(s1, sq1, sq1.getOptions().get(3), empQa);
         submitSurveyResponse(s1, sq2, sq2.getOptions().get(2), empQa);
 
@@ -572,7 +564,7 @@ public class DataInitializer implements CommandLineRunner {
                 });
 
         // ==================================================
-        // 14. ТИКЕТЫ ПОДДЕРЖКИ + СООБЩЕНИЯ
+        // 14. ТИКЕТЫ ПОДДЕРЖКИ
         // ==================================================
         SupportTicket t1 = createTicket(empBack, "Не работает VPN",
                 "Не могу подключиться к корпоративному VPN с домашнего ноутбука. " +
@@ -670,7 +662,7 @@ public class DataInitializer implements CommandLineRunner {
                 "Заявление на отпуск подаётся не позднее чем за 14 дней. " +
                         "Согласование идёт через HR-портал.",
                 kcProc, hr, hr);
-        KnowledgeArticle a3 = createKnowledgeArticle(
+        createKnowledgeArticle(
                 "Как распознать фишинг",
                 "Основные признаки фишингового письма:\n" +
                         "- Незнакомый отправитель\n" +
@@ -728,7 +720,7 @@ public class DataInitializer implements CommandLineRunner {
                 knowledgeArticleRepository.count());
 
         // ==================================================
-        // 19. РАСШИРЕНИЕ ДАННЫХ (сезоны, история, опросы, тикеты, новости)
+        // 19. РАСШИРЕНИЕ ДАННЫХ
         // ==================================================
         extendTestData();
     }
@@ -867,16 +859,12 @@ public class DataInitializer implements CommandLineRunner {
         achievementRepository.save(a);
     }
 
-    // -------------------- Department --------------------
-
     private Department createDepartment(String name, String description) {
         Department d = new Department();
         d.setName(name);
         d.setDescription(description);
         return departmentRepository.save(d);
     }
-
-    // -------------------- User --------------------
 
     private User createUser(String name, String email, String password, UserRole role,
                             double balance, double rating, double lifetime,
@@ -898,8 +886,6 @@ public class DataInitializer implements CommandLineRunner {
         u.setMonthlyEarnedCoins(BigDecimal.ZERO);
         return userRepository.save(u);
     }
-
-    // -------------------- Category / Product --------------------
 
     private Category createCategory(String name, String description, int sortOrder, String imageUrl) {
         Category c = new Category();
@@ -999,8 +985,6 @@ public class DataInitializer implements CommandLineRunner {
         shopAuditLogRepository.save(auditLog);
     }
 
-    // -------------------- Quest --------------------
-
     private Quest createQuest(String title, String description, double reward, String audience,
                               int daysDeadline, User creator, Double rewardRating,
                               boolean isMandatory, Double penaltyCoins, Double penaltyRating) {
@@ -1051,8 +1035,6 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    // -------------------- Event --------------------
-
     private Event createEvent(String name, String category, String description, String place,
                               User organizer, EventStatus status, boolean paidInCoins,
                               Double rewardCoins, Double rewardRating, boolean rewardsGranted) {
@@ -1092,8 +1074,6 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    // -------------------- News --------------------
-
     private News createNews(String title, String content, boolean pinned,
                             User author, String coverUrl, int expiresInDays) {
         News n = new News();
@@ -1117,8 +1097,6 @@ public class DataInitializer implements CommandLineRunner {
         newsRatingRepository.save(r);
     }
 
-    // -------------------- Achievements --------------------
-
     private void grantAchievementByCode(User user, String code) {
         Achievement a = achievementRepository.findByCode(code).orElse(null);
         if (a == null) return;
@@ -1134,8 +1112,6 @@ public class DataInitializer implements CommandLineRunner {
                     "Награда за достижение: " + a.getName(), null, null, null);
         }
     }
-
-    // -------------------- Seasons --------------------
 
     private Season createClosedSeason(String name, LocalDateTime start, LocalDateTime end) {
         Season s = new Season();
@@ -1202,8 +1178,6 @@ public class DataInitializer implements CommandLineRunner {
         departmentMemberResultRepository.save(dmr);
     }
 
-    // -------------------- Coin / Rating Tx --------------------
-
     private CoinTransaction createCoinTx(User from, User to, double amount,
                                          CoinTransactionType type, String comment,
                                          ThanksTag tag, Long _ignoredActorId,
@@ -1226,8 +1200,6 @@ public class DataInitializer implements CommandLineRunner {
         rt.setReason(reason);
         ratingTxRepository.save(rt);
     }
-
-    // -------------------- Orders --------------------
 
     private Order createOrder(User user, Product product, ProductVariant variant,
                               int quantity, BigDecimal totalPrice, OrderStatus status,
@@ -1252,8 +1224,6 @@ public class DataInitializer implements CommandLineRunner {
                 null, null, null);
     }
 
-    // -------------------- Surveys --------------------
-
     private Survey createSurvey(User creator, String title, String description,
                                 LocalDateTime deadline, Double rewardRating, Double penaltyRating) {
         Survey s = new Survey();
@@ -1267,11 +1237,6 @@ public class DataInitializer implements CommandLineRunner {
         return surveyRepository.save(s);
     }
 
-    /**
-     * Создаёт вопрос опроса и его варианты через EntityManager.persist
-     * с явным flush — это гарантирует, что у вопроса и вариантов
-     * будут id ДО того, как их используют в SurveyResponse.
-     */
     private SurveyQuestion addSurveyQuestion(Survey survey, String text, String[][] options) {
         SurveyQuestion q = new SurveyQuestion();
         q.setSurvey(survey);
@@ -1302,8 +1267,6 @@ public class DataInitializer implements CommandLineRunner {
         r.setUser(user);
         em.persist(r);
     }
-
-    // -------------------- Survey Templates --------------------
 
     private void createSurveyTemplate(User creator, String name, String description,
                                       String[][] questionSpecs) {
@@ -1336,8 +1299,6 @@ public class DataInitializer implements CommandLineRunner {
         surveyTemplateRepository.save(t);
     }
 
-    // -------------------- Support --------------------
-
     private SupportTicket createTicket(User creator, String topic, String description,
                                        boolean isQuestRequest) {
         SupportTicket t = new SupportTicket();
@@ -1369,8 +1330,6 @@ public class DataInitializer implements CommandLineRunner {
         ticketMessageRepository.save(m);
     }
 
-    // -------------------- Chat --------------------
-
     private Chat createChat(User a, User b) {
         User p1 = a.getId() < b.getId() ? a : b;
         User p2 = a.getId() < b.getId() ? b : a;
@@ -1395,8 +1354,6 @@ public class DataInitializer implements CommandLineRunner {
         chatRepository.save(chat);
     }
 
-    // -------------------- Notification --------------------
-
     private void notify(User user, String type, String title, String message, Long relatedId) {
         UserNotification n = new UserNotification();
         n.setUserId(user.getId());
@@ -1407,8 +1364,6 @@ public class DataInitializer implements CommandLineRunner {
         n.setRelatedId(relatedId);
         notificationRepository.save(n);
     }
-
-    // -------------------- Calendar Notes --------------------
 
     private void createNote(User user, String title, String text,
                             LocalDateTime time, Integer remindBefore) {
@@ -1422,8 +1377,6 @@ public class DataInitializer implements CommandLineRunner {
         n.setToastShown(false);
         noteRepository.save(n);
     }
-
-    // -------------------- Knowledge Articles --------------------
 
     private KnowledgeArticle createKnowledgeArticle(String title, String content,
                                                     KnowledgeCategory category,
@@ -1471,8 +1424,6 @@ public class DataInitializer implements CommandLineRunner {
 
         log.info("✅ Расширение тестовых данных завершено");
     }
-
-    // ---------- Исторические сезоны ----------
 
     private void extendHistoricalSeasons(User admin, User empBack, User empFront,
                                          User empQa, User empSales, User mgrBack) {
@@ -1543,8 +1494,13 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    // ---------- Галереи товаров ----------
-
+    /**
+     * Галереи товаров из product_images (маппинг по названиям из базы).
+     * - product_id 31 «Футболка» → b4d2e778 → мой «Футболка классическая»
+     * - product_id 34 «Худи с принтом» → dfca3e03 → мой «Худи с принтом»
+     * - product_id 41 «Мышка» → a7cb9ef4 → мой «Мышка»
+     * - product_id 50 «Кружка» → 56da81c3 → мой «Кружка»
+     */
     private void extendProductGalleries() {
         boolean alreadyFilled = productRepository.findAll().stream()
                 .anyMatch(p -> p.getImages() != null && !p.getImages().isEmpty());
@@ -1555,21 +1511,17 @@ public class DataInitializer implements CommandLineRunner {
             switch (p.getName()) {
                 case "Футболка классическая" ->
                         p.getImages().add("/uploads/b4d2e778-8329-44e2-9820-07a0775d5b3e.png");
-                case "Худи" ->
+                case "Худи с принтом" ->
                         p.getImages().add("/uploads/dfca3e03-a796-4d5f-9352-4f6a6b879fc7.png");
                 case "Мышка" ->
                         p.getImages().add("/uploads/a7cb9ef4-3677-4df1-9d34-efbd91c45d03.webp");
                 case "Кружка" ->
                         p.getImages().add("/uploads/56da81c3-5379-4e09-a915-015a8db8e424.png");
-                case "Повербанк" ->
-                        p.getImages().add("/uploads/1697df16-40e1-444d-943b-71ddcf2b12e0.png");
                 default -> { /* без галереи */ }
             }
             productRepository.save(p);
         }
     }
-
-    // ---------- История транзакций ----------
 
     private void extendTransactionHistory(User admin, User hr,
                                           User empBack, User empFront,
@@ -1694,8 +1646,6 @@ public class DataInitializer implements CommandLineRunner {
                 now.minusDays(17));
     }
 
-    // ---------- Доп. опросы ----------
-
     private void extendSurveys(User hr, User empBack, User empFront,
                                User empQa, User empSales, User mgrBack) {
         boolean already = surveyRepository.findAll().stream()
@@ -1781,8 +1731,6 @@ public class DataInitializer implements CommandLineRunner {
         submitSurveyResponse(s2, q5, q5.getOptions().get(3), mgrBack);
     }
 
-    // ---------- Доп. тикеты ----------
-
     private void extendTickets(User support, User empBack, User empFront,
                                User empQa, User empSales, User mgrBack) {
         if (ticketRepository.count() > 6) return;
@@ -1815,7 +1763,7 @@ public class DataInitializer implements CommandLineRunner {
                 "Скачала заново — теперь всё открывается.",
                 LocalDateTime.now().minusDays(2).plusHours(4));
 
-        SupportTicket t3 = createTicket(empQa,
+        createTicket(empQa,
                 "Проблема с тестовым стендом",
                 "Тестовый стенд не отвечает с утра. Production работает.",
                 false);
@@ -1835,8 +1783,6 @@ public class DataInitializer implements CommandLineRunner {
                 "Выполнил «Пройти курс по Java», прикладываю сертификат.",
                 true);
     }
-
-    // ---------- Доп. события и квесты ----------
 
     private void extendEventsAndQuests(User hr, User organiz, User mgrBack) {
         if (eventRepository.findAll().size() < 10) {
@@ -1875,8 +1821,6 @@ public class DataInitializer implements CommandLineRunner {
                     200.00, "Все сотрудники", 14, hr, 1.0, false, null, null);
         }
     }
-
-    // ---------- Доп. новости ----------
 
     private void extendNews(User hr, User admin, User empBack, User empFront,
                             User empQa, User empSales, User mgrBack, User support) {
@@ -1943,8 +1887,6 @@ public class DataInitializer implements CommandLineRunner {
             createNewsRatingIfMissing(n, empSales, 5);
         }
     }
-
-    // ---------- Аудит магазина ----------
 
     private void extendShopAudit(User admin, User hr) {
         if (shopAuditLogRepository.count() > 5) return;
