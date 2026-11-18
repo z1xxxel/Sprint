@@ -10,5 +10,6 @@ public enum CoinTransactionType {
     REFUND,
     SEASON_REWARD,
     QUEST_REWARD,
-    PENALTY
+    PENALTY,
+    KNOWLEDGE_REWARD
 }

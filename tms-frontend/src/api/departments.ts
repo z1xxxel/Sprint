@@ -4,6 +4,9 @@ import type { Department } from '../types'
 export const getDepartments = () =>
   api.get<Department[]>('/departments').then((r) => r.data)
 
+export const createDepartment = (data: { name: string; description?: string }) =>
+  api.post<Department>('/departments', data).then((r) => r.data)
+
 export const assignUserToDepartment = (deptId: number, userId: number) =>
   api.put(`/departments/${deptId}/users/${userId}`).then((r) => r.data)
 

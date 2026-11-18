@@ -8,7 +8,7 @@ import { notify } from '../lib/notify'
 import {
   IconArrowLeft, IconGift, IconCalendar, IconTrophy, IconBag,
   IconStar, IconUser, IconArrowDown, IconTarget, IconX,
-  IconSupport,
+  IconSupport, IconCheck,
 } from '../components/Icons'
 import type { CoinTx } from '../types'
 
@@ -68,6 +68,12 @@ const TYPE_META: Record<
     label: 'Штраф', icon: <IconX size={16} />,
     color: 'text-red-600 dark:text-red-400',
     bg: 'bg-red-50 dark:bg-red-500/10',
+  },
+  KNOWLEDGE_REWARD: {
+    label: 'Награда за базу знаний',
+    icon: <IconCheck size={16} />,
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bg: 'bg-indigo-50 dark:bg-indigo-500/10',
   },
 }
 

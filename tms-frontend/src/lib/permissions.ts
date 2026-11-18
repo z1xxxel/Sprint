@@ -18,8 +18,9 @@ export type Permission =
   | 'QUEST_MANAGE'
   | 'QUEST_PARTICIPATE'
   | 'NEWS_MANAGE'
+  | 'KNOWLEDGE_MANAGE'
 
-const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   EMPLOYEE: [
     'EVENT_CREATE',
     'COIN_TRANSFER',
@@ -48,6 +49,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'QUEST_PARTICIPATE',
     'TICKET_CREATE',
     'NEWS_MANAGE',
+    'KNOWLEDGE_MANAGE',
   ],
   SUPPORT: [
     'TICKET_MANAGE',
@@ -56,6 +58,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'CATALOG_VIEW',
     'QUEST_MANAGE',
     'QUEST_PARTICIPATE',
+    'KNOWLEDGE_MANAGE',
   ],
   HR: [
     'EVENT_CREATE',
@@ -73,6 +76,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'TICKET_MANAGE',
     'TICKET_CREATE',
     'NEWS_MANAGE',
+    'KNOWLEDGE_MANAGE',
   ],
   ADMIN: [
     'EVENT_CREATE',
@@ -92,6 +96,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'QUEST_MANAGE',
     'QUEST_PARTICIPATE',
     'NEWS_MANAGE',
+    'KNOWLEDGE_MANAGE',
   ],
 }
 
@@ -113,6 +118,7 @@ export const can = {
   assignRoles: (role?: Role) => hasPermission(role, 'ROLE_ASSIGN'),
   manageNews: (role?: Role) => hasPermission(role, 'NEWS_MANAGE'),
   manageTickets: (role?: Role) => hasPermission(role, 'TICKET_MANAGE'),
+  manageKnowledge: (role?: Role) => hasPermission(role, 'KNOWLEDGE_MANAGE'),
   grantCoins: (role?: Role) =>
     hasAnyPermission(role, ['COIN_GRANT_SUBORDINATE', 'COIN_GRANT_ANY']),
 }

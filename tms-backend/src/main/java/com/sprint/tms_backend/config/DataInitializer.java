@@ -28,12 +28,14 @@ public class DataInitializer implements CommandLineRunner {
     private final EventRepository eventRepository;
     private final NewsRepository newsRepository;
     private final TreasuryRepository treasuryRepository;
+    private final KnowledgeCategoryRepository knowledgeCategoryRepository;
 
     @Override
     @Transactional
     public void run(String... args) {
         seedSettings();
         seedTreasury();
+        seedKnowledgeCategories();
 
         if (userRepository.count() > 0) {
             log.info("База данных уже содержит пользователей. Пропускаем инициализацию.");
@@ -304,6 +306,42 @@ public class DataInitializer implements CommandLineRunner {
             s.setCategory(category);
             settingRepository.save(s);
         }
+    }
+
+    private void seedKnowledgeCategories() {
+        createKnowledgeCategoryIfMissing(
+                "IT и разработка",
+                "Технические статьи, гайды по стеку, инструкции по окружению",
+                1);
+        createKnowledgeCategoryIfMissing(
+                "Процессы",
+                "Как устроены внутренние процессы, регламенты, согласования",
+                2);
+        createKnowledgeCategoryIfMissing(
+                "HR и онбординг",
+                "Адаптация новичков, отпуска, льготы, корпоративные правила",
+                3);
+        createKnowledgeCategoryIfMissing(
+                "Безопасность",
+                "Пароли, доступы, фишинг, работа с чувствительными данными",
+                4);
+        createKnowledgeCategoryIfMissing(
+                "Инструменты",
+                "Внутренние сервисы, настройка окружения, полезные команды",
+                5);
+        createKnowledgeCategoryIfMissing(
+                "Лайфхаки",
+                "Неочевидные приёмы, которые экономят время коллегам",
+                6);
+    }
+
+    private void createKnowledgeCategoryIfMissing(String name, String description, int sortOrder) {
+        if (knowledgeCategoryRepository.existsByName(name)) return;
+        var c = new com.sprint.tms_backend.model.KnowledgeCategory();
+        c.setName(name);
+        c.setDescription(description);
+        c.setSortOrder(sortOrder);
+        knowledgeCategoryRepository.save(c);
     }
 
     private void upsertAchievement(String code, String name, String description, AchievementType type,

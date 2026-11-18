@@ -20,6 +20,7 @@ const TYPE_LABEL: Record<string, string> = {
   SEASON_REWARD: 'Награда за сезон',
   QUEST_REWARD: 'Награда за квест',
   PENALTY: 'Штраф',
+  KNOWLEDGE_REWARD: 'Награда за базу знаний',
 }
 
 const TYPE_COLOR: Record<string, string> = {
@@ -43,6 +44,8 @@ const TYPE_COLOR: Record<string, string> = {
     'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
   PENALTY:
     'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30',
+  KNOWLEDGE_REWARD:
+    'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30',
 }
 
 const TAG_LABEL: Record<string, string> = {

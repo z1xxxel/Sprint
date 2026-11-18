@@ -28,6 +28,7 @@ import {
   IconPulseLogo,
   IconEconomy,
   IconChevronDown,
+  IconBook,
 } from './Icons'
 import Avatar from './Avatar'
 import Toaster from './Toaster'
@@ -96,15 +97,27 @@ const NAV_CATEGORIES: NavCategory[] = [
     label: 'Ещё',
     items: [
       { to: '/news', label: 'Новости', icon: <IconBell size={16} /> },
+      { to: '/knowledge', label: 'База знаний', icon: <IconBook size={16} /> },
       { to: '/profile', label: 'Профиль', icon: <IconUser size={16} /> },
       { to: '/economy', label: 'Экономика', icon: <IconEconomy size={16} /> },
+    ],
+  },
+  {
+    id: 'manage',
+    label: 'Управление',
+    items: [
       {
         to: '/manage',
-        label: 'Управление',
+        label: 'Панель управления',
         icon: <IconSettings size={16} />,
         roles: ['MANAGER', 'HR', 'ADMIN', 'SUPPORT'],
       },
-      { to: '/admin', label: 'Админка', icon: <IconLock size={16} />, roles: ['ADMIN'] },
+      {
+        to: '/admin',
+        label: 'Администрирование',
+        icon: <IconLock size={16} />,
+        roles: ['ADMIN'],
+      },
     ],
   },
 ]

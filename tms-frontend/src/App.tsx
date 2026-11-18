@@ -31,6 +31,8 @@ import News from './pages/News'
 import NewsDetail from './pages/NewsDetail'
 import EconomyRules from './pages/EconomyRules'
 import Calendar from './pages/Calendar'
+import Knowledge from './pages/Knowledge'
+import KnowledgeArticleDetail from './pages/KnowledgeArticleDetail'
 
 function Protected({ children }: { children: ReactNode }) {
   const user = useAuth((s) => s.user)
@@ -80,6 +82,8 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="knowledge" element={<Knowledge />} />
+          <Route path="knowledge/:id" element={<KnowledgeArticleDetail />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -21,9 +21,11 @@ public enum Permission {
     ORDER_MANAGE,
     TICKET_MANAGE,
     TICKET_CREATE,
-    
+
     QUEST_MANAGE,
     QUEST_PARTICIPATE,
 
-    NEWS_MANAGE
+    NEWS_MANAGE,
+
+    KNOWLEDGE_MANAGE
 }

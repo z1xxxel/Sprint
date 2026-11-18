@@ -366,6 +366,8 @@ export interface Department {
   id: number
   name: string
   description: string | null
+  memberCount?: number
+  totalRating?: number
 }
 
 // ==========================================
@@ -391,4 +393,63 @@ export interface AdminQuestLog {
   adminComment: string | null
   creatorName: string | null
   questCreatedAt: string
+}
+
+// ==========================================
+// === БАЗА ЗНАНИЙ
+// ==========================================
+export type KnowledgeSubmissionStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface KnowledgeCategory {
+  id: number
+  name: string
+  description: string | null
+  sortOrder: number
+  articleCount: number
+}
+
+export interface KnowledgeArticleListItem {
+  id: number
+  title: string
+  excerpt: string
+  categoryId: number
+  categoryName: string
+  authorId: number
+  authorName: string
+  publishedAt: string
+}
+
+export interface KnowledgeArticle {
+  id: number
+  title: string
+  content: string
+  categoryId: number
+  categoryName: string
+  authorId: number
+  authorName: string
+  publishedByName: string | null
+  publishedAt: string
+  updatedAt: string | null
+}
+
+export interface KnowledgeSubmission {
+  id: number
+  targetArticleId: number | null
+  targetArticleTitle: string | null
+  targetOriginalContent: string | null
+  title: string
+  content: string
+  categoryId: number
+  categoryName: string
+  authorId: number
+  authorName: string
+  commentFromAuthor: string | null
+  status: KnowledgeSubmissionStatus
+  rewardCoins: number | null
+  rewardRating: number | null
+  rejectionReason: string | null
+  reviewedById: number | null
+  reviewedByName: string | null
+  createdAt: string
+  reviewedAt: string | null
 }

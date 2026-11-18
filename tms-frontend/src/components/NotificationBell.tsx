@@ -50,6 +50,7 @@ const NOTIF_STYLE: Record<string, { icon: React.ReactNode; color: ItemColor }> =
   BONUS: { icon: <IconTrophy size={16} />, color: 'amber' },
   REFUND: { icon: <IconCheck size={16} />, color: 'brand' },
   SYSTEM: { icon: <IconBell size={16} />, color: 'blue' },
+  KNOWLEDGE: { icon: <IconBell size={16} />, color: 'purple' },
 }
 
 export function refreshNotifications() {
@@ -242,15 +243,15 @@ export default function NotificationBell() {
   const total = itemsTotal + unreadCount
 
   async function handleNotificationClick(n: UserNotification) {
-    // Помечаем прочитанным на сервере
     markNotificationRead(n.id).catch(() => {})
-    // Убираем из локального списка
     setNotifications((prev) => prev.filter((x) => x.id !== n.id))
     setUnreadCount((prev) => Math.max(0, prev - 1))
-    // Навигация в зависимости от типа
     setOpen(false)
+
     if (n.type === 'PENALTY' || n.type === 'BONUS' || n.type === 'REFUND') {
       nav('/history/coins')
+    } else if (n.type === 'KNOWLEDGE') {
+      nav('/manage?tab=knowledge')
     }
   }
 

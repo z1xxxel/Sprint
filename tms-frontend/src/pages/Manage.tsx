@@ -12,9 +12,10 @@ import ManageCategoriesTab from './manage/ManageCategoriesTab'
 import ManageShopLogs from './manage/ManageShopLogs'
 import ManagePenaltiesTab from './manage/ManagePenaltiesTab'
 import AdminUsersTab from './admin/AdminUsersTab' // <-- ДОБАВЛЕНО: переиспользуем вкладку из админки
+import ManageKnowledgeTab from './manage/ManageKnowledgeTab'
 
 type Tab =
-  | 'users'      // <-- ДОБАВЛЕНО
+  | 'users'
   | 'events'
   | 'orders'
   | 'quests'
@@ -24,6 +25,7 @@ type Tab =
   | 'categories'
   | 'logs'
   | 'penalties'
+  | 'knowledge'
 
 export default function Manage() {
   const user = useAuth((s) => s.user)!
@@ -49,6 +51,9 @@ export default function Manage() {
     tabs.push({ id: 'shop', label: 'Товары' })
     tabs.push({ id: 'categories', label: 'Категории' })
     tabs.push({ id: 'logs', label: 'Логи магазина' })
+  }
+  if (can.manageKnowledge(user.role)) {
+    tabs.push({ id: 'knowledge', label: 'База знаний' })
   }
   if (['MANAGER', 'HR', 'ADMIN'].includes(user.role)) {
     tabs.push({ id: 'penalties', label: 'Штрафы' })
@@ -122,6 +127,7 @@ export default function Manage() {
         {tab === 'logs' && can.manageCatalog(user.role) && <ManageShopLogs />}
         {tab === 'penalties' &&
           ['MANAGER', 'HR', 'ADMIN'].includes(user.role) && <ManagePenaltiesTab />}
+        {tab === 'knowledge' && can.manageKnowledge(user.role) && <ManageKnowledgeTab />}
       </div>
     </div>
   )

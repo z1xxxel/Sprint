@@ -38,7 +38,8 @@ public enum UserRole {
             Permission.QUEST_MANAGE,
             Permission.QUEST_PARTICIPATE,
             Permission.TICKET_CREATE,
-            Permission.NEWS_MANAGE
+            Permission.NEWS_MANAGE,
+            Permission.KNOWLEDGE_MANAGE
     )),
 
     SUPPORT(EnumSet.of(
@@ -47,7 +48,8 @@ public enum UserRole {
             Permission.COIN_TRANSFER,
             Permission.CATALOG_VIEW,
             Permission.QUEST_MANAGE,
-            Permission.QUEST_PARTICIPATE
+            Permission.QUEST_PARTICIPATE,
+            Permission.KNOWLEDGE_MANAGE
     )),
 
     HR(EnumSet.of(
@@ -66,7 +68,8 @@ public enum UserRole {
             Permission.QUEST_PARTICIPATE,
             Permission.TICKET_MANAGE,
             Permission.TICKET_CREATE,
-            Permission.NEWS_MANAGE
+            Permission.NEWS_MANAGE,
+            Permission.KNOWLEDGE_MANAGE
     )),
 
     ADMIN(EnumSet.allOf(Permission.class));
