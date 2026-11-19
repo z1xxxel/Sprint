@@ -295,7 +295,6 @@ export default function AdminUsersTab() {
       {pwdUser && (
         <PasswordModal
           user={pwdUser}
-          actorId={me.id}
           onClose={() => setPwdUser(null)}
           onSaved={() => {
             notify.success(`Пароль изменён · ${pwdUser.name}`)
@@ -477,12 +476,10 @@ function RoleModal({
 // ==========================================
 function PasswordModal({
   user,
-  actorId,
   onClose,
   onSaved,
 }: {
   user: UserListItem
-  actorId: number
   onClose: () => void
   onSaved: () => void
 }) {
