@@ -500,7 +500,7 @@ function PasswordModal({
     setBusy(true)
     setError('')
     try {
-      await changeUserPassword(user.id, pwd, actorId)
+      await changeUserPassword(user.id, pwd)
       onSaved()
     } catch (e: any) {
       const msg = e.response?.data || 'Ошибка'
