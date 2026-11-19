@@ -123,8 +123,15 @@ public class DataInitializer implements CommandLineRunner {
         User empSales = createUser("Елена Продажникова", "emp_sales@tms.local", "123",
                 UserRole.EMPLOYEE, 3350.00, 0.0, 8.0, sales, null);
 
-        User organizer = createUser("Олег Организаторов", "org@tms.local", "123",
-                UserRole.ORGANIZER, 2200.00, 0.0, 40.0, null, null);
+        // ════════════════════════════════════════════════════════════════
+// ДЕМО-АККАУНТ ДЛЯ ЭКСПЕРТОВ
+// Чтобы убрать после демо — удалите этот блок и все упоминания
+// переменной `organizer` ниже (или замените на обычного сотрудника).
+// Логин: demo@tms.local / demo
+// ════════════════════════════════════════════════════════════════
+        User organizer = createUser("Демо Организатор", "demo@tms.local", "demo",
+                UserRole.ORGANIZER, 50000.00, 0.0, 500.0, null, null);
+// ════════════════════════════════════════════════════════════════
 
         // ==================================================
         // 3. КАТЕГОРИИ И ТОВАРЫ (с картинками из базы)
@@ -730,12 +737,12 @@ public class DataInitializer implements CommandLineRunner {
     // ==================================================================
 
     private void seedSettings() {
-        createSettingIfNotExists("limit.peer.daily-per-recipient", "1000",
-                "Лимит на коллегу",
-                "Максимум монет, которое можно перевести одному коллеге за день", "Переводы");
-        createSettingIfNotExists("limit.peer.daily-total", "1000",
-                "Общий лимит переводов",
-                "Максимум монет, которое можно перевести всем коллегам за день", "Переводы");
+        // ⚠️ ДЕМО-ЗНАЧЕНИЯ: подняты для того, чтобы эксперты могли свободно нажимать.
+// Перед продом вернуть: 1000 / 1000 / 10000
+        createSettingIfNotExists("limit.peer.daily-per-recipient", "50000",
+                "Лимит на коллегу", "...", "Переводы");
+        createSettingIfNotExists("limit.peer.daily-total", "50000",
+                "Общий лимит переводов", "...", "Переводы");
         createSettingIfNotExists("limit.manager.daily-per-subordinate", "2000",
                 "Лимит бонусов на сотрудника",
                 "Максимум монет, которое менеджер может начислить одному сотруднику за день", "Переводы");

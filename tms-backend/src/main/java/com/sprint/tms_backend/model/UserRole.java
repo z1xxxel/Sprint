@@ -16,12 +16,30 @@ public enum UserRole {
     )),
 
     ORGANIZER(EnumSet.of(
+            // Активности
             Permission.EVENT_CREATE,
             Permission.EVENT_EDIT_OWN,
             Permission.EVENT_EDIT_ANY,
-            Permission.COIN_TRANSFER,
+            Permission.EVENT_APPROVE,      // модерация событий
+            Permission.EVENT_VIEW_ANY,     // видит события в статусе NEW
+            Permission.QUEST_MANAGE,       // создание/модерация квестов
+            Permission.QUEST_PARTICIPATE,
+
+            // Магазин
             Permission.CATALOG_VIEW,
-            Permission.QUEST_PARTICIPATE
+            Permission.CATALOG_MANAGE,     // создание/редактирование товаров
+            Permission.ORDER_MANAGE,       // одобрение/выдача заказов
+
+            // Контент
+            Permission.NEWS_MANAGE,
+            Permission.KNOWLEDGE_MANAGE,
+
+            // Поддержка
+            Permission.TICKET_CREATE,
+            Permission.TICKET_MANAGE,
+
+            // Экономика
+            Permission.COIN_TRANSFER
     )),
 
     MANAGER(EnumSet.of(

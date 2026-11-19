@@ -65,6 +65,32 @@ export default function Login() {
           </span>
         </div>
 
+        {/* ═══════════════════════════════════════════════════════
+    ДЕМО-ДОСТУП ДЛЯ ЭКСПЕРТОВ — удалить после демо.
+    Убирает необходимость вводить пароль руками.
+   ═══════════════════════════════════════════════════════ */}
+        <div className="mb-5 p-4 rounded-xl bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/30">
+          <div className="text-xs text-brand-700 dark:text-brand-400 font-semibold uppercase tracking-wider mb-2">
+            Вход для экспертов
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail('demo@tms.local')
+              setPassword('demo')
+            }}
+            className="w-full bg-white dark:bg-[#0d1117] border border-brand-300 dark:border-brand-500/40 rounded-lg px-3 py-2.5 hover:border-brand-500 hover:shadow-sm transition text-left"
+          >
+            <div className="text-sm font-medium text-slate-900 dark:text-white">
+              Демо Организатор
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              demo@tms.local / demo — заполнит поля автоматически
+            </div>
+          </button>
+        </div>
+        {/* ═══════════════════════════════════════════════════════ */}
+
         <form
           onSubmit={submit}
           className="bg-white dark:bg-[#161b22] p-8 rounded-2xl border border-slate-200 dark:border-[#30363d] shadow-xl space-y-5"
