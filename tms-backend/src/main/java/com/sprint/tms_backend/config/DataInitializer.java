@@ -123,14 +123,15 @@ public class DataInitializer implements CommandLineRunner {
         User empSales = createUser("Елена Продажникова", "emp_sales@tms.local", "123",
                 UserRole.EMPLOYEE, 3350.00, 0.0, 8.0, sales, null);
 
+        User organizer = createUser("Демо Организатор", "demo@tms.local", "demo",
+                UserRole.ORGANIZER, 50000.00, 0.0, 500.0, null, null);
+
         // ════════════════════════════════════════════════════════════════
 // ДЕМО-АККАУНТ ДЛЯ ЭКСПЕРТОВ
 // Чтобы убрать после демо — удалите этот блок и все упоминания
 // переменной `organizer` ниже (или замените на обычного сотрудника).
 // Логин: demo@tms.local / demo
 // ════════════════════════════════════════════════════════════════
-        User organizer = createUser("Демо Организатор", "demo@tms.local", "demo",
-                UserRole.ORGANIZER, 50000.00, 0.0, 500.0, null, null);
 // ════════════════════════════════════════════════════════════════
 
         // ==================================================
@@ -1413,7 +1414,7 @@ public class DataInitializer implements CommandLineRunner {
         User empQa   = userRepository.findByEmail("emp_qa@tms.local").orElse(null);
         User empSales = userRepository.findByEmail("emp_sales@tms.local").orElse(null);
         User support = userRepository.findByEmail("support@tms.local").orElse(null);
-        User organiz = userRepository.findByEmail("org@tms.local").orElse(null);
+        User organiz = userRepository.findByEmail("demo@tms.local").orElse(null);
 
         if (admin == null || hr == null) {
             log.warn("Базовые пользователи не найдены — пропускаем extendTestData()");
