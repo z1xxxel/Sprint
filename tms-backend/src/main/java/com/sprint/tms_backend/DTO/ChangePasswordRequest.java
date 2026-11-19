@@ -1,3 +1,3 @@
 package com.sprint.tms_backend.DTO;
 
-public record ChangePasswordRequest(String newPassword) {}
+public record ChangePasswordRequest(String newPassword, String oldPassword) {}

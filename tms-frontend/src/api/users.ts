@@ -41,10 +41,10 @@ export const toggleUserBlock = (userId: number, actorId: number) =>
 export const changeUserPassword = (
   userId: number,
   newPassword: string,
-  actorId: number
+  oldPassword?: string
 ) =>
   api
-    .put<string>(`/users/${userId}/password`, { newPassword }, { params: { actorId } })
+    .put<string>(`/users/${userId}/password`, { newPassword, oldPassword })
     .then((r) => r.data)
 
 // ==========================================

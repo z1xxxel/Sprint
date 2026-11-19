@@ -70,7 +70,8 @@ public class UserController {
             @PathVariable Long id,
             @RequestParam Long actorId,
             @RequestBody ChangePasswordRequest request) {
-        userService.changeUserPassword(id, request.newPassword(), actorId);
+        userService.changeUserPassword(
+                id, request.newPassword(), request.oldPassword(), actorId);
         return ResponseEntity.ok("Пароль успешно изменен");
     }
 

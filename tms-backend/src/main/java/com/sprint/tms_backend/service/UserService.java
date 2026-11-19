@@ -108,12 +108,16 @@ public class UserService {
     }
 
     @Transactional
-    public void changeUserPassword(Long userId, String newPassword, Long actorId) {
+    public void changeUserPassword(Long userId, String newPassword,
+                                   String oldPassword, Long actorId) {
         User actor = userRepository.findById(actorId)
-                .orElseThrow(() -> new RuntimeException("Админ не найден"));
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-        if (actor.getRole() != UserRole.ADMIN) {
-            throw new SecurityException("Только ADMIN может сбрасывать пароли");
+        boolean isSelf = actor.getId().equals(userId);
+        boolean isAdmin = actor.getRole() == UserRole.ADMIN;
+
+        if (!isSelf && !isAdmin) {
+            throw new SecurityException("Можно менять только свой пароль");
         }
 
         if (newPassword == null || newPassword.trim().length() < 4) {
@@ -122,6 +126,13 @@ public class UserService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        // Смена СВОЕГО пароля — обязательна проверка текущего
+        if (isSelf && !isAdmin) {
+            if (oldPassword == null || !user.getPassword().equals(oldPassword)) {
+                throw new RuntimeException("Неверный текущий пароль");
+            }
+        }
 
         user.setPassword(newPassword);
         userRepository.save(user);

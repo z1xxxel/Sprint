@@ -17,6 +17,7 @@ import { notify } from '../lib/notify'
 import Avatar from '../components/Avatar'
 import StreakBadge from '../components/StreakBadge'
 import ImageCropperModal from '../components/ImageCropperModal'
+import ChangePasswordModal from '../components/ChangePasswordModal'
 import {
   IconChart,
   IconStar,
@@ -26,6 +27,7 @@ import {
   IconArrowRight,
   IconArrowUp,
   IconArrowDown,
+  IconLock,
 } from '../components/Icons'
 import type { AchievementProfileDTO, CoinTx } from '../types'
 
@@ -56,6 +58,7 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [streak, setStreak] = useState<StreakInfo | null>(null)
   const [cropperSrc, setCropperSrc] = useState<string | null>(null)
+  const [passwordOpen, setPasswordOpen] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const p = profile.data
@@ -69,7 +72,7 @@ export default function Profile() {
       .catch(() => {})
   }, [user.id])
 
-    const ratingChartData = useMemo(() => {
+  const ratingChartData = useMemo(() => {
     if (!ratingHistory.data || !p) return []
     const sorted = [...ratingHistory.data].reverse()
     const totalDelta = sorted.reduce((s, t) => s + t.amount, 0)
@@ -200,6 +203,13 @@ export default function Profile() {
                 {p.departmentName || 'Без отдела'}
               </span>
               {streak && <StreakBadge streak={streak} />}
+              <button
+                onClick={() => setPasswordOpen(true)}
+                className="inline-flex items-center gap-1 text-xs bg-white dark:bg-[#0d1117] border border-slate-300 dark:border-[#30363d] text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-full hover:border-brand-500 transition"
+              >
+                <IconLock size={11} />
+                Сменить пароль
+              </button>
             </div>
           </div>
         </div>
@@ -480,7 +490,7 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Кроппер */}
+      {/* Кроппер аватара */}
       {cropperSrc && (
         <ImageCropperModal
           imageSrc={cropperSrc}
@@ -492,6 +502,11 @@ export default function Profile() {
           onCancel={handleCancelCrop}
           onCrop={handleCropped}
         />
+      )}
+
+      {/* Модалка смены пароля */}
+      {passwordOpen && (
+        <ChangePasswordModal onClose={() => setPasswordOpen(false)} />
       )}
     </div>
   )
